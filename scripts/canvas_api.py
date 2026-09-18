@@ -126,36 +126,53 @@ def resolve_quiz_question_id(domain, course_id, quiz_id, question_hint):
 def get_quiz_answers(domain, course_id, quiz_id, question_id):
     """
     Returns {user_id: answer_text_or_None} for every submission of this quiz.
-    Uses the latest attempt's quiz_submission for each user.
+
+    NOTE: this used to hit /api/v1/quiz_submissions/{id}/questions, which
+    looked plausible (it returns one entry per question with an "id" and an
+    "answer" field) but is actually a stale/blueprint view of the question
+    bank for *in-progress* quiz-taking -- for an already-graded submission
+    it returns the same question "id" sequence for every student with
+    "answer": None, never the student's actual response. That silently
+    broke quiz-answer resolution for 100% of students; every previously
+    "resolved" username was actually coming from the Home Page assignment
+    fallback, not the quiz, which only surfaces once a student's fallback
+    is *also* empty (masking the bug rather than fixing it).
+
+    The reliable path is the quiz's own shadow assignment: fetch its
+    submissions with submission_history, and read each student's actual
+    answer text out of the last history entry's submission_data (matched
+    by question_id, which -- unlike the endpoint above -- really does
+    identify the question here).
     """
-    submissions = list(
-        _paginated(domain, f"/api/v1/courses/{course_id}/quizzes/{quiz_id}/submissions")
+    quiz, _ = _request(domain, f"/api/v1/courses/{course_id}/quizzes/{quiz_id}")
+    assignment_id = quiz.get("assignment_id")
+    if not assignment_id:
+        raise CanvasError(f"Quiz {quiz_id} has no linked assignment_id -- can't read submissions.")
+
+    items = _paginated(
+        domain,
+        f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions",
+        {"include[]": "submission_history"},
     )
 
-    # keep only the latest attempt per user
-    latest_by_user = {}
-    for s in submissions:
+    answers = {}
+    for s in items:
         uid = s.get("user_id")
         if uid is None:
             continue
-        if uid not in latest_by_user or s.get("attempt", 0) >= latest_by_user[uid].get("attempt", 0):
-            latest_by_user[uid] = s
-
-    answers = {}
-    for uid, sub in latest_by_user.items():
-        qs_id = sub["id"]
-        try:
-            data, _ = _request(domain, f"/api/v1/quiz_submissions/{qs_id}/questions")
-            questions = data.get("quiz_submission_questions", data) if isinstance(data, dict) else data
-            answer_text = None
-            for q in questions:
-                if q.get("id") == question_id or q.get("question_id") == question_id:
-                    raw = q.get("answer")
-                    answer_text = raw if isinstance(raw, str) else (str(raw) if raw is not None else None)
+        history = s.get("submission_history") or []
+        answer_text = None
+        if history:
+            submission_data = history[-1].get("submission_data") or []
+            for item in submission_data:
+                if item.get("question_id") == question_id:
+                    raw = item.get("text")
+                    if isinstance(raw, str):
+                        answer_text = re.sub("<[^>]+>", "", raw).strip() or None
+                    elif raw is not None:
+                        answer_text = str(raw)
                     break
-            answers[str(uid)] = answer_text
-        except CanvasError:
-            answers[str(uid)] = None
+        answers[str(uid)] = answer_text
     return answers
 
 
@@ -214,4 +231,25 @@ def get_assignment_scores(domain, course_id, assignment_id):
     for s in items:
         uid = str(s.get("user_id"))
         out[uid] = s.get("score")
+    return out
+
+
+def get_assignment_submissions(domain, course_id, assignment_id):
+    """Returns {user_id: {"score", "workflow_state", "submitted_at"}} for
+    every submission of this assignment -- used for a graded main
+    assignment, where completed/zero-grade/not-submitted needs more than
+    just the score (a Canvas submission record exists for every enrolled
+    student even when nothing was turned in, with workflow_state
+    "unsubmitted" and no submitted_at)."""
+    items = _paginated(
+        domain, f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions"
+    )
+    out = {}
+    for s in items:
+        uid = str(s.get("user_id"))
+        out[uid] = {
+            "score": s.get("score"),
+            "workflow_state": s.get("workflow_state"),
+            "submitted_at": s.get("submitted_at"),
+        }
     return out
