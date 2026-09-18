@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Copy this file to run.sh (in the same folder), fill in your two tokens
+# below in a text editor, and from then on just run: bash run.sh --week N
+# (N = which week of the course to check through, 1-5; omit for all 5).
+#
+# Results are cached (config.cache.json, gitignored) -- a plain re-run
+# reuses the cache and costs no API calls. Add --recheck-all to force a
+# full fresh check of everyone, or --update "name,name" to refresh just
+# specific students (e.g. after they resubmit) while reusing the cache for
+# everyone else.
+#
+# run.sh is gitignored and Claude will never write your tokens into it --
+# fill them in yourself, once. This avoids re-pasting long tokens through
+# chat every time the report runs.
+set -euo pipefail
+
+export CANVAS_API_TOKEN="paste-your-canvas-token-here"
+export GITHUB_TOKEN="paste-your-github-token-here"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+python3 "$SCRIPT_DIR/scripts/build_report.py" "$SCRIPT_DIR/config.json" "$@"

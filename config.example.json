@@ -1,0 +1,63 @@
+{
+  "_comment": "Copy this file to config.json and fill in your section's values. Defaults below match the standard WDD130 course template shared across sections.",
+
+  "canvas": {
+    "domain": "https://byupw.instructure.com",
+    "course_id": "REPLACE_WITH_YOUR_COURSE_ID",
+    "section_label": "WDD130 · Web Fundamentals",
+
+    "quiz_name": "W01 Setup: Tools",
+    "quiz_question_hint": "GitHub",
+
+    "home_page_assignment_name": "W01 Assignment: Home Page",
+    "codealong_selfreport_assignments": {
+      "week01": "W01 Code-along Activity: Creating a New HTML File",
+      "week02": "W02 Code-along Activity: Add CSS to an HTML File",
+      "week03": "W03 Code-along Activity: Home Page Layout",
+      "week04": "W04 Code-along Activity: Home Page Layout",
+      "week05": "W05 Code-along Activity: Quiz Form"
+    },
+    "codealong_selfreport_min_score": 5
+  },
+
+  "github": {
+    "repo_name": "wdd130",
+    "repo_name_variations": ["wdd-130", "WDD130", "wd130", "Wdd130", "WD130"]
+  },
+
+  "checks": {
+    "week01": {
+      "candidate_files": ["week01/favorite-city.html", "week01/favourite-city.html"],
+      "folder": "week01"
+    },
+    "week02": {
+      "file": "week02/temple.html",
+      "folder": "week02",
+      "requires_css_link": true
+    },
+    "week03": {
+      "file": "wwr/about.html",
+      "requires_css_link": true,
+      "cursory": true,
+      "codealong_ul_class": "box",
+      "codealong_aside_class": "box"
+    },
+    "week04": {
+      "css_combined_selector": ["header", "footer"],
+      "css_nav_display_property": "flex",
+      "css_required_display_property": "grid",
+      "main_assignment_display_properties": ["grid", "flex"]
+    },
+    "week05": {
+      "codealong_file": "week05/quiz.html",
+      "codealong_requires_css_link": true,
+      "codealong_requires_input": true,
+      "main_assignment_file": "wwr/contact.html"
+    },
+    "ai_scan_root_file": "index.html"
+  },
+
+  "guardrail_files": ["AGENTS.md", ".github/copilot-instructions.md"],
+
+  "week_folders_to_check": ["week01", "week02", "week03", "week04", "week05"]
+}

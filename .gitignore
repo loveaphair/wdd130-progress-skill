@@ -1,0 +1,7 @@
+config.json
+run.sh
+*.cache.json
+wdd130_progress_report.html
+__pycache__/
+*.pyc
+.DS_Store
