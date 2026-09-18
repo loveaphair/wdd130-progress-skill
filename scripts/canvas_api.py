@@ -10,6 +10,7 @@ session: navigating to a quiz's "history" page and scraping rendered text,
 and opening SpeedGrader to read a submitted URL out of an iframe. Both are
 now single authenticated API calls.
 """
+import html
 import json
 import os
 import re
@@ -168,7 +169,12 @@ def get_quiz_answers(domain, course_id, quiz_id, question_id):
                 if item.get("question_id") == question_id:
                     raw = item.get("text")
                     if isinstance(raw, str):
-                        answer_text = re.sub("<[^>]+>", "", raw).strip() or None
+                        # Rich-text quiz answers can carry HTML entities (e.g. a
+                        # trailing "&nbsp;" Canvas's editor injects for a trailing
+                        # space) that tag-stripping alone leaves as literal text.
+                        text = re.sub("<[^>]+>", " ", raw)
+                        text = html.unescape(text)
+                        answer_text = re.sub(r"\s+", " ", text).strip() or None
                     elif raw is not None:
                         answer_text = str(raw)
                     break
