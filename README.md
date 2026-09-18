@@ -50,6 +50,17 @@ ID -- nothing in this repo is specific to any one instructor's section
 except what's in `config.json`, which each instructor creates themselves
 and which is `.gitignore`'d.
 
+## Updating
+
+```
+cd ~/.claude/skills/wdd130-progress
+git pull
+```
+
+Safe to run anytime -- `config.json`, `run.sh`, and `config.cache.json`
+are all `.gitignore`'d, so pulling never touches your tokens or course
+config, only the skill's own files.
+
 ## If something breaks on a new section
 
 See the "First run on a new section" section in `SKILL.md` -- Canvas
