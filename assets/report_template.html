@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>WDD130 Weekly Progress</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,7 +38,7 @@
   }
   *{box-sizing:border-box;}
   body{
-    background:var(--paper); color:var(--ink);
+    background:var(--paper); color:var(--ink); margin:0;
     font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
     font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
   }
@@ -45,53 +46,80 @@
   a{ color:var(--accent); }
   a:focus-visible, summary:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 
-  .wrap{ max-width:1040px; margin:0 auto; padding:44px 28px 88px; }
-
   .eyebrow{
-    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:0.09em;
-    text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:10px; margin-bottom:18px;
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.09em;
+    text-transform:uppercase; color:var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:10px;
   }
-  .eyebrow::before{ content:""; width:7px; height:7px; background:var(--accent); display:inline-block; border-radius:1px; }
+  .eyebrow::before{ content:""; width:7px; height:7px; background:var(--accent); display:inline-block; border-radius:1px; flex:0 0 auto; }
   h1{
     font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:700;
-    font-size:clamp(30px, 4.6vw, 42px); line-height:1.05; margin:0 0 10px; text-wrap:balance; letter-spacing:-0.01em;
+    font-size:19px; line-height:1.2; margin:0; letter-spacing:-0.005em;
   }
-  .dek{ color:var(--ink-muted); font-size:16.5px; max-width:70ch; margin:0 0 28px; }
+  .dek{ color:var(--ink-muted); font-size:15.5px; max-width:70ch; margin:0 0 4px; }
   .dek strong{ color:var(--ink); font-weight:600; }
   .code{
     font-family:'IBM Plex Mono', monospace; font-size:13.5px; background:var(--surface-2);
     border:1px solid var(--line); border-radius:4px; padding:2px 7px; color:var(--ink);
   }
 
+  /* ---- shell layout: left nav + content ---- */
+  .shell{ display:flex; align-items:flex-start; }
+  .sidebar{
+    width:232px; flex:0 0 232px; position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
+    padding:30px 18px 24px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:22px;
+  }
+  .sidebar-nav{ display:flex; flex-direction:column; gap:2px; }
+  .navbtn{
+    text-align:left; font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:600; font-size:14.5px;
+    background:transparent; border:none; border-left:3px solid transparent; color:var(--ink-muted);
+    padding:9px 12px; cursor:pointer; border-radius:0 6px 6px 0; transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .navbtn:hover{ color:var(--ink); background:var(--surface-2); }
+  .navbtn.active{ color:var(--accent); background:var(--accent-soft); border-left-color:var(--accent); }
+  .sidebar-tools{ display:flex; flex-direction:column; gap:8px; padding-top:18px; border-top:1px solid var(--line); }
+  .sidebar-tools .course-home-link, .sidebar-tools .audit-select{ width:100%; text-align:left; }
+
+  .content{ flex:1 1 auto; min-width:0; padding:38px 34px 96px; max-width:900px; }
+  .page-head{ margin-bottom:30px; }
+
+  @media (max-width:860px){
+    .shell{ flex-direction:column; }
+    .sidebar{ width:100%; flex:0 0 auto; position:relative; height:auto; overflow-y:visible; border-right:none; border-bottom:1px solid var(--line); padding:18px 20px 14px; }
+    .sidebar-nav{ flex-direction:row; flex-wrap:wrap; }
+    .navbtn{ border-left:none; border-bottom:3px solid transparent; border-radius:6px 6px 0 0; padding:8px 12px; }
+    .navbtn.active{ border-left-color:transparent; border-bottom-color:var(--accent); }
+    .sidebar-tools{ flex-direction:row; flex-wrap:wrap; border-top:none; padding-top:12px; }
+    .content{ padding:26px 18px 72px; max-width:none; }
+  }
+
   /* Toolbar links (course home + page audit tool) */
-  .toolbar-links{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
   .course-home-link, .audit-select{
     font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600;
     padding:7px 12px; border-radius:5px; border:1px solid var(--line); color:var(--ink);
     background:var(--surface-2); transition:border-color .15s ease, color .15s ease;
   }
-  .course-home-link{ text-decoration:none; white-space:nowrap; }
+  .course-home-link{ text-decoration:none; white-space:nowrap; display:inline-block; }
   .course-home-link:hover, .audit-select:hover{ border-color:var(--accent); color:var(--accent); }
   .audit-select{ cursor:pointer; appearance:auto; }
 
-  /* Tabs */
+  /* Top-level view panels (Dashboard / Week NN / About) */
+  .viewpanel{ display:none; }
+  .viewpanel.active{ display:block; }
+
+  /* Sub-tabs (Code Along Activity / Main Assignment) within a week panel */
   .tabbar{
-    display:flex; flex-wrap:wrap; gap:4px; border-bottom:1px solid var(--line); margin-bottom:32px;
+    display:flex; flex-wrap:wrap; gap:4px; border-bottom:1px solid var(--line); margin-bottom:28px;
   }
   .tabbtn{
     font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:600; font-size:15px;
-    background:transparent; border:none; color:var(--ink-muted); padding:11px 18px 12px;
+    background:transparent; border:none; color:var(--ink-muted); padding:11px 4px 12px; margin-right:22px;
     cursor:pointer; white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px;
     transition:color .15s ease, border-color .15s ease;
   }
   .tabbtn:hover{ color:var(--ink); }
   .tabbtn.active{ color:var(--accent); border-bottom-color:var(--accent); }
-  .tabbtn .n{
-    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-muted);
-    margin-left:6px;
-  }
-  .tabpanel{ display:none; }
-  .tabpanel.active{ display:block; }
+  .subtabpanel{ display:none; }
+  .subtabpanel.active{ display:block; }
 
   /* Stat strip */
   .stats{ display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:40px; }
@@ -100,7 +128,7 @@
     border-radius:6px; padding:16px 16px 14px; box-shadow:var(--shadow);
   }
   .stat .n{
-    font-family:'IBM Plex Mono', monospace; font-variant-numeric:tabular-nums; font-size:30px; font-weight:600;
+    font-family:'IBM Plex Mono', monospace; font-variant-numeric:tabular-nums; font-size:28px; font-weight:600;
     color:var(--stat-color, var(--ink)); line-height:1; display:block; margin-bottom:8px;
   }
   .stat .l{ font-size:12.5px; color:var(--ink-muted); line-height:1.35; }
@@ -110,18 +138,13 @@
 
   section{ margin-bottom:44px; }
   .sec-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap; }
-  h2{ font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:700; font-size:22px; margin:0; letter-spacing:-0.005em; }
+  h2{ font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:700; font-size:21px; margin:0; letter-spacing:-0.005em; }
+  h3{ font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:700; font-size:16px; margin:0; }
   .count-pill{
     font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; padding:2px 9px; border-radius:99px;
     background:var(--pill-bg, var(--unknown-soft)); color:var(--pill-fg, var(--unknown));
   }
   .sec-note{ color:var(--ink-muted); font-size:14.5px; margin:0 0 18px; max-width:70ch; }
-  .checkgroup-label{
-    font-family:'IBM Plex Sans Condensed', system-ui, sans-serif; font-weight:700; font-size:13px;
-    text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin:0 0 10px;
-    padding-top:28px; border-top:1px solid var(--line);
-  }
-  .checkgroup-label:first-child{ padding-top:0; border-top:none; }
 
   .roster{ background:var(--surface); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); overflow:hidden; }
   .row{ display:grid; grid-template-columns: 1.3fr 0.85fr auto auto; gap:14px; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line); }
@@ -130,7 +153,7 @@
   .row .uname{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .row .actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 
-  /* AI-signal badge -- heuristic only, see footer note */
+  /* AI-signal badge -- heuristic only, see About page */
   .ai-badge{
     font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; white-space:nowrap;
     padding:3px 9px; border-radius:99px; background:var(--unknown-soft); color:var(--unknown); cursor:pointer;
@@ -230,239 +253,302 @@
   }
   .placeholder strong{ color:var(--ink); font-weight:600; }
 
-  footer{ border-top:1px solid var(--line); padding-top:22px; color:var(--ink-muted); font-size:13px; line-height:1.7; margin-top:12px; }
-  footer .mono{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
+  /* About page */
+  .about-list section{ margin-bottom:26px; max-width:70ch; }
+  .about-list h3{ margin:0 0 6px; }
+  .about-list p{ color:var(--ink-muted); font-size:14px; line-height:1.7; margin:0; }
+  .about-list .mono{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; }
+  #last-updated{ color:var(--ink-muted); font-size:13px; padding-top:6px; border-top:1px solid var(--line); margin-top:6px; }
 </style>
 
-<div class="wrap">
-  <div class="eyebrow">__SECTION_LABEL__ &middot; Web Fundamentals</div>
-  <h1>WDD130 Weekly Progress</h1>
-  <p class="dek">
-    Running tracker for all <strong><span id="student-count">&hellip;</span> active students</strong>, built from each student's GitHub repo
-    (via their <strong>__QUIZ_NAME__</strong> quiz answer, with the <strong>__HOME_PAGE_ASSIGNMENT_NAME__</strong> assignment
-    as a fallback). One tab per week's code&#8209;along check plus a heuristic AI&#8209;usage score, and a dashboard
-    of every repo link with one-click username copy. Updated as new weeks are graded.
-  </p>
-  <p class="dek" id="current-week-note" style="margin-top:-14px;"></p>
-
-  <div class="toolbar-links">
-    <a class="course-home-link" href="https://byui-cse.github.io/wdd130-ww-course/" target="_blank" rel="noopener">Course Home &rarr;</a>
-    <select id="page-audit-select" class="audit-select" aria-label="Page Audit Tool">
-      <option value="" selected>Page Audit Tool&hellip;</option>
-      <option value="https://byui-cse.github.io/wdd-audits/wdd130-w01-homepage.html">Week 01</option>
-      <option value="https://byui-cse.github.io/wdd-audits/wdd130-w02-homepage.html">Week 02</option>
-      <option value="https://byui-cse.github.io/wdd-audits/wdd130-w03-project-about.html">Week 03</option>
-      <option value="https://byui-cse.github.io/wdd-audits/wdd130-w04-project-about.html">Week 04</option>
-      <option value="https://byui-cse.github.io/wdd-audits/wdd130-w05-project-contact.html">Week 05</option>
-    </select>
-  </div>
-
-  <div class="tabbar" role="tablist">
-    <button class="tabbtn active" data-tab="dashboard" role="tab">Dashboard</button>
-    <button class="tabbtn" data-tab="week01" role="tab">Week 01</button>
-    <button class="tabbtn" data-tab="week02" role="tab">Week 02</button>
-    <button class="tabbtn" data-tab="week03" role="tab">Week 03</button>
-    <button class="tabbtn" data-tab="week04" role="tab">Week 04</button>
-    <button class="tabbtn" data-tab="week05" role="tab">Week 05</button>
-  </div>
-
-  <div id="panel-dashboard" class="tabpanel active">
-    <p class="sec-note">Every student's GitHub username (click to copy), repo, and their live GitHub Pages Home Page and About Page. A dash means we don't have a GitHub username for them yet -- these are constructed links (username.github.io/repo), not verified against what's actually published.</p>
-    <div class="tablewrap">
-      <table class="dash">
-        <thead><tr><th>Name</th><th>Username</th><th>GitHub Repo</th><th>Home Page</th><th>About Page</th><th>Guardrail</th></tr></thead>
-        <tbody id="dash-body"></tbody>
-      </table>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="eyebrow">__SECTION_LABEL__</div>
+      <h1>WDD130 Weekly Progress</h1>
     </div>
-  </div>
+    <div class="sidebar-nav" role="tablist" aria-label="Report sections">
+      <button class="navbtn active" data-view="dashboard" role="tab">Dashboard</button>
+      <button class="navbtn" data-view="week01" role="tab">Week 01</button>
+      <button class="navbtn" data-view="week02" role="tab">Week 02</button>
+      <button class="navbtn" data-view="week03" role="tab">Week 03</button>
+      <button class="navbtn" data-view="week04" role="tab">Week 04</button>
+      <button class="navbtn" data-view="week05" role="tab">Week 05</button>
+      <button class="navbtn" data-view="about" role="tab">About</button>
+    </div>
+    <div class="sidebar-tools">
+      <a class="course-home-link" href="https://byui-cse.github.io/wdd130-ww-course/" target="_blank" rel="noopener">Course Home &rarr;</a>
+      <select id="page-audit-select" class="audit-select" aria-label="Page Audit Tool">
+        <option value="" selected>Page Audit Tool&hellip;</option>
+        <option value="https://byui-cse.github.io/wdd-audits/wdd130-w01-homepage.html">Week 01 audit</option>
+        <option value="https://byui-cse.github.io/wdd-audits/wdd130-w02-homepage.html">Week 02 audit</option>
+        <option value="https://byui-cse.github.io/wdd-audits/wdd130-w03-project-about.html">Week 03 audit</option>
+        <option value="https://byui-cse.github.io/wdd-audits/wdd130-w04-project-about.html">Week 04 audit</option>
+        <option value="https://byui-cse.github.io/wdd-audits/wdd130-w05-project-contact.html">Week 05 audit</option>
+      </select>
+    </div>
+  </nav>
 
-  <div id="panel-week01" class="tabpanel">
-    <p class="sec-note" style="margin-bottom:24px;">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W01 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. AI-usage score checks <span class="code">index.html</span> for comments, inline styles/JS, and other signals unusual this early. Heuristic only &mdash; see footer.</p>
-    <div class="stats" id="w01-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w01-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <p class="sec-note">favorite-city.html (or favourite-city.html) exists in week01 and has content.</p>
-      <details><summary>Show students</summary><div class="names-grid" id="w01-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but file not added yet</h2><span class="count-pill" id="w01-nofile-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <p class="sec-note">week01 folder exists (template was used) but no favorite-city.html / favourite-city.html found -- worth a look, since they claimed credit for this.</p>
-      <div class="roster" id="w01-nofile-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but template not used</h2><span class="count-pill" id="w01-notemplate-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
-      <p class="sec-note">No week01 folder at all &mdash; repo is empty or doesn't follow the course template.</p>
-      <div class="roster" id="w01-notemplate-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w01-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <p class="sec-note">Hasn't scored __SELFREPORT_MIN_SCORE__+ on the W01 Code-along self-report yet -- not evaluated against the technical criteria.</p>
-      <div class="roster" id="w01-notreported-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No submission data</h2><span class="count-pill" id="w01-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <p class="sec-note">No usable GitHub username from either the quiz or the Home Page assignment.</p>
-      <div class="plain-list" id="w01-nodata-list"></div>
-    </section>
-  </div>
+  <main class="content">
+    <div class="page-head">
+      <p class="dek">Running tracker for all <strong><span id="student-count">&hellip;</span> active students</strong>.</p>
+      <p class="dek" id="current-week-note"></p>
+    </div>
 
-  <div id="panel-week02" class="tabpanel">
-    <p class="sec-note" style="margin-bottom:24px;">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W02 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. AI-usage score checks <span class="code">index.html</span> plus its linked stylesheet. Heuristic only &mdash; see footer.</p>
-    <div class="stats" id="w02-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Missing the CSS link</h2><span class="count-pill" id="w02-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <p class="sec-note">temple.html exists but has no &lt;link&gt; to a stylesheet -- worth a look, since they claimed credit for this.</p>
-      <div class="roster" id="w02-fail-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Haven't started week02 at all</h2><span class="count-pill" id="w02-nofolder-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
-      <p class="sec-note">No week02 folder in their repo &mdash; further behind than a missing link.</p>
-      <div class="roster" id="w02-nofolder-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w02-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <p class="sec-note">Hasn't scored __SELFREPORT_MIN_SCORE__+ on the W02 Code-along self-report yet -- not evaluated against the technical criteria.</p>
-      <div class="roster" id="w02-notreported-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>No submission data</h2><span class="count-pill" id="w02-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <p class="sec-note">No usable GitHub username from either the quiz or the Home Page assignment.</p>
-      <div class="plain-list" id="w02-nodata-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w02-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w02-pass-list"></div></details>
-    </section>
-  </div>
+    <div id="panel-dashboard" class="viewpanel active">
+      <p class="sec-note">Every student's GitHub username (click to copy), repo, and their live GitHub Pages Home Page and About Page. A dash means we don't have a GitHub username for them yet -- these are constructed links (username.github.io/repo), not verified against what's actually published.</p>
+      <div class="tablewrap">
+        <table class="dash">
+          <thead><tr><th>Name</th><th>Username</th><th>GitHub Repo</th><th>Home Page</th><th>About Page</th><th>Guardrail</th></tr></thead>
+          <tbody id="dash-body"></tbody>
+        </table>
+      </div>
+    </div>
 
-  <div id="panel-week03" class="tabpanel">
-    <p class="checkgroup-label">Code-along: index.html</p>
-    <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W03 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. Root <span class="code">index.html</span> should have a &lt;ul class="box"&gt; and an &lt;aside&gt; that also carries class="box".</p>
-    <div class="stats" id="w03ca-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w03ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w03ca-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but missing the box class(es)</h2><span class="count-pill" id="w03ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <div class="roster" id="w03ca-fail-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w03ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="roster" id="w03ca-notreported-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No submission data</h2><span class="count-pill" id="w03ca-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="plain-list" id="w03ca-nodata-list"></div>
-    </section>
+    <div id="panel-week01" class="viewpanel">
+      <div class="tabbar" role="tablist" data-scope="week01">
+        <button class="tabbtn active" data-subtab="codealong" role="tab">Code Along Activity: favorite-city.html</button>
+        <button class="tabbtn" data-subtab="main" role="tab">Main Assignment: W01 Assignment: Home Page</button>
+      </div>
 
-    <p class="checkgroup-label">Main assignment (cursory): wwr/about.html</p>
-    <p class="sec-note">Cursory pass only &mdash; most students haven't reached this yet. Checks <span class="code">wwr/about.html</span> and its linked stylesheet for AI-usage signals.</p>
-    <div class="stats" id="w03-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Submitted so far</h2><span class="count-pill" id="w03-submitted-count" style="--pill-bg:var(--accent-soft); --pill-fg:var(--accent);"></span></div>
-      <div class="roster" id="w03-submitted-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>Not submitted yet</h2><span class="count-pill" id="w03-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w03-notsubmitted-list"></div></details>
-    </section>
-  </div>
+      <div id="subpanel-week01-codealong" class="subtabpanel active">
+        <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W01 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. <span class="code">week01/favorite-city.html</span> (or <span class="code">favourite-city.html</span>) should exist and have content.</p>
+        <div class="stats" id="w01ca-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w01ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w01ca-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>Self-reported, but missing something</h2><span class="count-pill" id="w01ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
+          <div class="roster" id="w01ca-fail-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w01ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w01ca-notreported-list"></div>
+        </section>
+      </div>
 
-  <div id="panel-week04" class="tabpanel">
-    <p class="checkgroup-label">Code-along: index.html</p>
-    <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W04 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. Root <span class="code">index.html</span>'s linked stylesheet(s) should have a combined <span class="code">header, footer</span> rule, a <span class="code">nav</span> rule with <span class="code">display: flex</span>, and a <span class="code">display: grid</span> declaration somewhere.</p>
-    <div class="stats" id="w04ca-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w04ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w04ca-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but missing one or more rules</h2><span class="count-pill" id="w04ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <div class="roster" id="w04ca-fail-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but no CSS found yet</h2><span class="count-pill" id="w04ca-nocss-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
-      <div class="roster" id="w04ca-nocss-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w04ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="roster" id="w04ca-notreported-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No submission data</h2><span class="count-pill" id="w04ca-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="plain-list" id="w04ca-nodata-list"></div>
-    </section>
+      <div id="subpanel-week01-main" class="subtabpanel">
+        <p class="sec-note">Status comes straight from the Canvas grade on this assignment. AI-usage score checks <span class="code">index.html</span> for comments, inline styles/JS, and other signals unusual this early. Heuristic only &mdash; see About page.</p>
+        <div class="stats" id="w01main-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Completed</h2><span class="count-pill" id="w01main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w01main-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>0 Grade</h2><span class="count-pill" id="w01main-zero-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
+          <div class="roster" id="w01main-zero-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Not submitted</h2><span class="count-pill" id="w01main-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w01main-notsubmitted-list"></div>
+        </section>
+      </div>
+    </div>
 
-    <p class="checkgroup-label">Main assignment: wwr stylesheet</p>
-    <p class="sec-note">By this point the wwr project's stylesheet (e.g. <span class="code">rafting.css</span>) should show a <span class="code">display: grid</span> or <span class="code">display: flex</span> rule somewhere. Also carries an AI-usage score for <span class="code">wwr/about.html</span> (same file/score as the week03 tab, since it's an ongoing assignment).</p>
-    <div class="stats" id="w04main-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed</h2><span class="count-pill" id="w04main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w04main-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>No grid/flex yet</h2><span class="count-pill" id="w04main-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <div class="roster" id="w04main-fail-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No CSS / no data</h2><span class="count-pill" id="w04main-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="plain-list" id="w04main-nodata-list"></div>
-    </section>
-  </div>
+    <div id="panel-week02" class="viewpanel">
+      <div class="tabbar" role="tablist" data-scope="week02">
+        <button class="tabbtn active" data-subtab="codealong" role="tab">Code Along Activity: temple.html</button>
+        <button class="tabbtn" data-subtab="main" role="tab">Main Assignment: W02 Assignment: Home Page Enhancement</button>
+      </div>
 
-  <div id="panel-week05" class="tabpanel">
-    <p class="checkgroup-label">Code-along: week05/quiz.html</p>
-    <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W05 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. <span class="code">week05/quiz.html</span> should exist, link a stylesheet, and contain at least one &lt;input&gt;.</p>
-    <div class="stats" id="w05ca-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w05ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w05ca-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Self-reported, but missing CSS link or &lt;input&gt;</h2><span class="count-pill" id="w05ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <div class="roster" id="w05ca-fail-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Haven't started week05 at all</h2><span class="count-pill" id="w05ca-nofolder-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
-      <div class="roster" id="w05ca-nofolder-list"></div>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w05ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="roster" id="w05ca-notreported-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No submission data</h2><span class="count-pill" id="w05ca-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="plain-list" id="w05ca-nodata-list"></div>
-    </section>
+      <div id="subpanel-week02-codealong" class="subtabpanel active">
+        <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W02 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. <span class="code">week02/temple.html</span> should exist and have a &lt;link&gt; to a stylesheet.</p>
+        <div class="stats" id="w02ca-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w02ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w02ca-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>Self-reported, but missing something</h2><span class="count-pill" id="w02ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
+          <div class="roster" id="w02ca-fail-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w02ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w02ca-notreported-list"></div>
+        </section>
+      </div>
 
-    <p class="checkgroup-label">Main assignment: wwr/contact.html</p>
-    <p class="sec-note"><span class="code">wwr/contact.html</span> should exist with real content &mdash; either newly created or filled in from the empty template file. Also carries an AI-usage score, checked against contact.html plus the wwr stylesheet.</p>
-    <div class="stats" id="w05main-stats"></div>
-    <section>
-      <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w05main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
-      <details><summary>Show students</summary><div class="names-grid" id="w05main-pass-list"></div></details>
-    </section>
-    <section>
-      <div class="sec-head"><h2>Still empty</h2><span class="count-pill" id="w05main-empty-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
-      <div class="roster" id="w05main-empty-list"></div>
-    </section>
-    <section style="margin-bottom:0;">
-      <div class="sec-head"><h2>No file / no data</h2><span class="count-pill" id="w05main-nodata-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
-      <div class="plain-list" id="w05main-nodata-list"></div>
-    </section>
-  </div>
+      <div id="subpanel-week02-main" class="subtabpanel">
+        <p class="sec-note">Status comes straight from the Canvas grade on this assignment. AI-usage score checks <span class="code">index.html</span> plus its linked stylesheet. Heuristic only &mdash; see About page.</p>
+        <div class="stats" id="w02main-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Completed</h2><span class="count-pill" id="w02main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w02main-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>0 Grade</h2><span class="count-pill" id="w02main-zero-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
+          <div class="roster" id="w02main-zero-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Not submitted</h2><span class="count-pill" id="w02main-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w02main-notsubmitted-list"></div>
+        </section>
+      </div>
+    </div>
 
-  <footer>
-    <div><span class="mono">Source:</span> Canvas course __COURSE_ID__ (__SECTION_LABEL__), active-enrollment roster (<span id="student-count-2">&hellip;</span> students) via <span class="mono">/api/v1/courses/__COURSE_ID__/users</span>.</div>
-    <div><span class="mono">Username:</span> __QUIZ_NAME__ quiz (__QUIZ_ID__), question containing &ldquo;__QUIZ_QUESTION_HINT__&rdquo;, "Your Answer" &mdash; falling back to the __HOME_PAGE_ASSIGNMENT_NAME__ assignment (__HOME_PAGE_ASSIGNMENT_ID__) submission URL when the quiz answer wasn't a usable username.</div>
-    <div><span class="mono">Week01 check:</span> week01/favorite-city.html or week01/favourite-city.html fetched from each repo (HEAD of default branch) and confirmed non-empty.</div>
-    <div><span class="mono">Week02 check:</span> week02/temple.html fetched from each repo and searched for a &lt;link&gt; referencing a .css file.</div>
-    <div><span class="mono">Self-report gate:</span> each week's code-along only counts against a student once they've scored at least __SELFREPORT_MIN_SCORE__ points on that week's "W0N Code-along Activity" self-report assignment in Canvas. A student who hasn't self-reported is shown separately as "Didn't self-report," regardless of what their actual code shows -- the instructor doesn't need to see a false "fail" for work nobody claimed credit for. Each "self-report" link opens that student's submission for the matching week's assignment.</div>
-    <div><span class="mono">AI-usage score:</span> a 0&ndash;100 heuristic from code-level signals &mdash; heavily/uniformly sectioned HTML/CSS comments (a stray comment or two is lightly weighted, since that's taught), inline <span class="mono">style=</span> or embedded <span class="mono">&lt;style&gt;</span>, JavaScript, advanced layout (grid-template-areas, clamp, aspect-ratio), animations, and high CSS rule counts. Semantic tags, CSS custom properties (variables), and CSS resets are <em>not</em> scored since the course requires and teaches them. Click a badge to see exactly which signals fired. This is a lead worth a look, not a verdict &mdash; false positives happen, and a real student can write clean, well-commented code.</div>
-    <div><span class="mono">Guardrail check:</span> the course template ships <span class="mono">AGENTS.md</span> and <span class="mono">.github/copilot-instructions.md</span>, both instructing AI agents to tutor rather than write solutions. Each repo's copies are compared against the template original; click a non-"OK" badge on the Dashboard for details.</div>
-    <div id="last-updated"></div>
-  </footer>
+    <div id="panel-week03" class="viewpanel">
+      <div class="tabbar" role="tablist" data-scope="week03">
+        <button class="tabbtn active" data-subtab="codealong" role="tab">Code Along Activity: index.html</button>
+        <button class="tabbtn" data-subtab="main" role="tab">Main Assignment: W03 Assignment: Rafting Site – About Us Page</button>
+      </div>
+
+      <div id="subpanel-week03-codealong" class="subtabpanel active">
+        <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W03 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. Root <span class="code">index.html</span> should have a &lt;ul class="box"&gt; and an &lt;aside&gt; that also carries class="box".</p>
+        <div class="stats" id="w03ca-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w03ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w03ca-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>Self-reported, but missing something</h2><span class="count-pill" id="w03ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
+          <div class="roster" id="w03ca-fail-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w03ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w03ca-notreported-list"></div>
+        </section>
+      </div>
+
+      <div id="subpanel-week03-main" class="subtabpanel">
+        <p class="sec-note">Status comes straight from the Canvas grade on this assignment (most students haven't reached it yet this early). AI-usage score checks <span class="code">wwr/about.html</span> and its linked stylesheet. Heuristic only &mdash; see About page.</p>
+        <div class="stats" id="w03main-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Completed</h2><span class="count-pill" id="w03main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w03main-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>0 Grade</h2><span class="count-pill" id="w03main-zero-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
+          <div class="roster" id="w03main-zero-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Not submitted</h2><span class="count-pill" id="w03main-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w03main-notsubmitted-list"></div></details>
+        </section>
+      </div>
+    </div>
+
+    <div id="panel-week04" class="viewpanel">
+      <div class="tabbar" role="tablist" data-scope="week04">
+        <button class="tabbtn active" data-subtab="codealong" role="tab">Code Along Activity: index.html</button>
+        <button class="tabbtn" data-subtab="main" role="tab">Main Assignment: W04 Assignment: Rafting Site – Update About Us Page</button>
+      </div>
+
+      <div id="subpanel-week04-codealong" class="subtabpanel active">
+        <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W04 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. Root <span class="code">index.html</span>'s linked stylesheet(s) should have a combined <span class="code">header, footer</span> rule, a <span class="code">nav</span> rule with <span class="code">display: flex</span>, and a <span class="code">display: grid</span> declaration somewhere.</p>
+        <div class="stats" id="w04ca-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w04ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w04ca-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>Self-reported, but missing something</h2><span class="count-pill" id="w04ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
+          <div class="roster" id="w04ca-fail-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w04ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w04ca-notreported-list"></div>
+        </section>
+      </div>
+
+      <div id="subpanel-week04-main" class="subtabpanel">
+        <p class="sec-note">Status comes straight from the Canvas grade on this assignment. Also carries an AI-usage score for <span class="code">wwr/about.html</span> (same file/score as the week03 tab, since it's an ongoing assignment).</p>
+        <div class="stats" id="w04main-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Completed</h2><span class="count-pill" id="w04main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w04main-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>0 Grade</h2><span class="count-pill" id="w04main-zero-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
+          <div class="roster" id="w04main-zero-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Not submitted</h2><span class="count-pill" id="w04main-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w04main-notsubmitted-list"></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="panel-week05" class="viewpanel">
+      <div class="tabbar" role="tablist" data-scope="week05">
+        <button class="tabbtn active" data-subtab="codealong" role="tab">Code Along Activity: week05/quiz.html</button>
+        <button class="tabbtn" data-subtab="main" role="tab">Main Assignment: W05 Assignment: Rafting Site – Contact Us Page</button>
+      </div>
+
+      <div id="subpanel-week05-codealong" class="subtabpanel active">
+        <p class="sec-note">Only counts against a student once they've scored at least <span class="code">__SELFREPORT_MIN_SCORE__</span> points on the W05 Code-along self-report -- otherwise they're shown separately below regardless of what their code shows. <span class="code">week05/quiz.html</span> should exist, link a stylesheet, and contain at least one &lt;input&gt;.</p>
+        <div class="stats" id="w05ca-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Confirmed complete</h2><span class="count-pill" id="w05ca-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w05ca-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>Self-reported, but missing something</h2><span class="count-pill" id="w05ca-fail-count" style="--pill-bg:var(--warn-soft); --pill-fg:var(--warn);"></span></div>
+          <div class="roster" id="w05ca-fail-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Didn't self-report</h2><span class="count-pill" id="w05ca-notreported-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w05ca-notreported-list"></div>
+        </section>
+      </div>
+
+      <div id="subpanel-week05-main" class="subtabpanel">
+        <p class="sec-note">Status comes straight from the Canvas grade on this assignment. Also carries an AI-usage score, checked against contact.html plus the wwr stylesheet.</p>
+        <div class="stats" id="w05main-stats"></div>
+        <section>
+          <div class="sec-head"><h2>Completed</h2><span class="count-pill" id="w05main-pass-count" style="--pill-bg:var(--good-soft); --pill-fg:var(--good);"></span></div>
+          <details><summary>Show students</summary><div class="names-grid" id="w05main-pass-list"></div></details>
+        </section>
+        <section>
+          <div class="sec-head"><h2>0 Grade</h2><span class="count-pill" id="w05main-zero-count" style="--pill-bg:var(--bad-soft); --pill-fg:var(--bad);"></span></div>
+          <div class="roster" id="w05main-zero-list"></div>
+        </section>
+        <section style="margin-bottom:0;">
+          <div class="sec-head"><h2>Not submitted</h2><span class="count-pill" id="w05main-notsubmitted-count" style="--pill-bg:var(--unknown-soft); --pill-fg:var(--unknown);"></span></div>
+          <div class="roster" id="w05main-notsubmitted-list"></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="panel-about" class="viewpanel">
+      <h2 style="margin-bottom:22px;">About this dashboard</h2>
+      <div class="about-list">
+        <section>
+          <h3>Source</h3>
+          <p>Canvas course __COURSE_ID__ (__SECTION_LABEL__), active-enrollment roster (<span id="student-count-2">&hellip;</span> students) via <span class="mono">/api/v1/courses/__COURSE_ID__/users</span>.</p>
+        </section>
+        <section>
+          <h3>Username resolution</h3>
+          <p>__QUIZ_NAME__ quiz (__QUIZ_ID__), question containing &ldquo;__QUIZ_QUESTION_HINT__&rdquo;, "Your Answer" &mdash; falling back to the __HOME_PAGE_ASSIGNMENT_NAME__ assignment (__HOME_PAGE_ASSIGNMENT_ID__) submission URL when the quiz answer wasn't a usable username.</p>
+        </section>
+        <section>
+          <h3>Week 01 check</h3>
+          <p>week01/favorite-city.html or week01/favourite-city.html fetched from each repo (HEAD of default branch) and confirmed non-empty.</p>
+        </section>
+        <section>
+          <h3>Week 02 check</h3>
+          <p>week02/temple.html fetched from each repo and searched for a &lt;link&gt; referencing a .css file.</p>
+        </section>
+        <section>
+          <h3>Self-report gate</h3>
+          <p>Each week's code-along only counts against a student once they've scored at least __SELFREPORT_MIN_SCORE__ points on that week's "W0N Code-along Activity" self-report assignment in Canvas. A student who hasn't self-reported is shown separately as "Didn't self-report," regardless of what their actual code shows &mdash; the instructor doesn't need to see a false "fail" for work nobody claimed credit for. Each "Self-report" link opens that student's submission for the matching week's assignment. Every "Self-reported, but missing something" row also spells out exactly which criteria weren't met.</p>
+        </section>
+        <section>
+          <h3>Main assignment grade</h3>
+          <p>Completed / 0 Grade / Not submitted comes directly from that week's graded Canvas assignment submission, not from a technical check &mdash; a literal score of 0 is shown separately from "not submitted" (no submission on file at all). Work that's been turned in but not graded yet is shown as "Completed" so the AI-usage report is still visible. Click "Grade" to open that student's submission in Canvas.</p>
+        </section>
+        <section>
+          <h3>AI-usage score</h3>
+          <p>A 0&ndash;100 heuristic from code-level signals &mdash; heavily/uniformly sectioned HTML/CSS comments (a stray comment or two is lightly weighted, since that's taught), inline <span class="mono">style=</span> or embedded <span class="mono">&lt;style&gt;</span>, JavaScript, advanced layout (grid-template-areas, clamp, aspect-ratio), animations, and high CSS rule counts. Semantic tags, CSS custom properties (variables), and CSS resets are <em>not</em> scored since the course requires and teaches them. Click a badge to see exactly which signals fired. This is a lead worth a look, not a verdict &mdash; false positives happen, and a real student can write clean, well-commented code.</p>
+        </section>
+        <section>
+          <h3>Guardrail check</h3>
+          <p>The course template ships <span class="mono">AGENTS.md</span> and <span class="mono">.github/copilot-instructions.md</span>, both instructing AI agents to tutor rather than write solutions. Each repo's copies are compared against the template original; click a non-"OK" badge on the Dashboard for details.</p>
+        </section>
+      </div>
+      <div id="last-updated"></div>
+    </div>
+  </main>
 </div>
 
 <script>
@@ -470,7 +556,7 @@ const DATA = __DATA_JSON__;
 const CURRENT_WEEK = __CURRENT_WEEK__;
 
 function notCheckedPlaceholder(weekLabel, weekNum){
-  return `<div class="placeholder"><strong>Not checked this run.</strong><br>This report was generated through week ${CURRENT_WEEK} &mdash; re-run with <span class="mono">--week ${weekNum}</span> (or later) once the class reaches ${weekLabel}.</div>`;
+  return `<div class="placeholder"><strong>Not checked this run.</strong><br>This report was generated through week ${CURRENT_WEEK} &mdash; re-run once the class reaches ${weekLabel}.</div>`;
 }
 
 function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -552,405 +638,160 @@ function statTile(cls, n, label){
   return `<div class="stat ${cls}"><span class="n">${n}</span><span class="l">${esc(label)}</span></div>`;
 }
 
-function renderWeek01(){
-  const pass = DATA.filter(s => s.week01.status === 'pass');
-  const nofile = DATA.filter(s => s.week01.status === 'no_file');
-  const notemplate = DATA.filter(s => s.week01.status === 'no_template');
-  const notreported = DATA.filter(s => s.week01.status === 'not_self_reported');
-  const nodata = DATA.filter(s => s.week01.status === 'no_data');
+function studentReasons(s, weekKey){
+  const reasons = (s[weekKey].codealong.reasons || []).slice();
+  if(!s.username && s.note) reasons.push(s.note);
+  return reasons;
+}
 
-  document.getElementById('w01-stats').innerHTML =
+// Shared across all 5 weeks -- every code-along check collapses to the same
+// 3 outcomes (pass / self-reported-but-failed / didn't self-report), so one
+// render function drives every week's Code Along Activity sub-tab.
+function renderCodealong(weekKey, prefix){
+  const pass = DATA.filter(s => s[weekKey].codealong.status === 'pass');
+  const fail = DATA.filter(s => s[weekKey].codealong.status === 'fail');
+  const notreported = DATA.filter(s => s[weekKey].codealong.status === 'not_self_reported');
+
+  document.getElementById(`${prefix}-stats`).innerHTML =
     statTile('good', pass.length, 'Confirmed complete') +
-    statTile('warn', nofile.length, 'File not added yet') +
-    statTile('bad', notemplate.length, 'Template not used') +
-    statTile('unknown', notreported.length, "Didn't self-report") +
-    statTile('unknown', nodata.length, 'No submission data');
+    statTile('warn', fail.length, 'Self-reported, missing something') +
+    statTile('unknown', notreported.length, "Didn't self-report");
 
-  document.getElementById('w01-pass-count').textContent = pass.length + ' students';
-  document.getElementById('w01-nofile-count').textContent = nofile.length + ' students';
-  document.getElementById('w01-notemplate-count').textContent = notemplate.length + ' students';
-  document.getElementById('w01-notreported-count').textContent = notreported.length + ' students';
-  document.getElementById('w01-nodata-count').textContent = nodata.length + ' students';
+  document.getElementById(`${prefix}-pass-count`).textContent = pass.length + ' students';
+  document.getElementById(`${prefix}-fail-count`).textContent = fail.length + ' students';
+  document.getElementById(`${prefix}-notreported-count`).textContent = notreported.length + ' students';
 
-  document.getElementById('w01-pass-list').innerHTML = pass.map(s => { const b = aiBadge(s.ai && s.ai.week1); return `
-    <div class="ai-item"><div class="ng-head"><span class="ng-left"><span>${esc(s.name)}</span>${b.summary}</span><a href="${esc(s.week01.fileLink)}" target="_blank" rel="noopener">view file &rarr;</a></div>${b.panel}</div>`; }).join('');
+  document.getElementById(`${prefix}-pass-list`).innerHTML = pass.map(s => `
+    <div><span class="ng-left"><span>${esc(s.name)}</span></span>${s[weekKey].codealong.fileLink ? `<a href="${esc(s[weekKey].codealong.fileLink)}" target="_blank" rel="noopener">view file &rarr;</a>` : ''}</div>`).join('');
 
-  document.getElementById('w01-nofile-list').innerHTML = nofile.map(s => { const b = aiBadge(s.ai && s.ai.week1); return `
+  document.getElementById(`${prefix}-fail-list`).innerHTML = fail.map(s => `
     <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
+      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username||'')}</span>
+      <span class="actions">
+        ${s[weekKey].codealong.fileLink
+          ? `<a class="go" href="${esc(s[weekKey].codealong.fileLink)}" target="_blank" rel="noopener">View file &rarr;</a>`
+          : (s.root ? `<a class="go" href="${esc(s.root)}" target="_blank" rel="noopener">View repo &rarr;</a>` : '')}
+        <a class="go secondary" href="${esc(s[weekKey].codealong.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
+      </span>
+      <span class="reason">${studentReasons(s, weekKey).map(esc).join(', ')}</span>
+    </div>`).join('');
+
+  document.getElementById(`${prefix}-notreported-list`).innerHTML = notreported.map(s => `
+    <div class="row">
+      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username||'')}</span>
+      <span class="actions">
+        <a class="go" href="${esc(s[weekKey].codealong.fileLink || s.root)}" target="_blank" rel="noopener">${s[weekKey].codealong.fileLink ? 'View file' : 'View repo'} &rarr;</a>
+        <a class="go secondary" href="${esc(s[weekKey].codealong.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
+      </span>
+    </div>`).join('');
+}
+
+// Shared across all 5 weeks -- completed/0 Grade/not submitted comes
+// straight from that week's Canvas assignment grade (see build_report.py's
+// main_status). The AI-usage badge only ever appears here, not on the
+// code-along side, since it's scored against each week's graded deliverable.
+function renderMainAssignment(weekKey, prefix, aiKey){
+  const pass = DATA.filter(s => s[weekKey].mainAssignment.status === 'completed');
+  const zero = DATA.filter(s => s[weekKey].mainAssignment.status === 'zero_grade');
+  const notsub = DATA.filter(s => s[weekKey].mainAssignment.status === 'not_submitted');
+
+  document.getElementById(`${prefix}-stats`).innerHTML =
+    statTile('good', pass.length, 'Completed') +
+    statTile('bad', zero.length, '0 Grade') +
+    statTile('unknown', notsub.length, 'Not submitted');
+
+  document.getElementById(`${prefix}-pass-count`).textContent = pass.length + ' students';
+  document.getElementById(`${prefix}-zero-count`).textContent = zero.length + ' students';
+  document.getElementById(`${prefix}-notsubmitted-count`).textContent = notsub.length + ' students';
+
+  document.getElementById(`${prefix}-pass-list`).innerHTML = pass.map(s => { const b = aiBadge(s.ai && s.ai[aiKey]); return `
+    <div class="ai-item"><div class="ng-head"><span class="ng-left"><span>${esc(s.name)}</span>${b.summary}</span>
+      <span style="display:flex; gap:10px;">
+        ${s[weekKey].mainAssignment.fileLink ? `<a href="${esc(s[weekKey].mainAssignment.fileLink)}" target="_blank" rel="noopener">view file &rarr;</a>` : ''}
+        <a href="${esc(s[weekKey].mainAssignment.gradeLink)}" target="_blank" rel="noopener">grade &rarr;</a>
+      </span></div>${b.panel}</div>`; }).join('');
+
+  document.getElementById(`${prefix}-zero-list`).innerHTML = zero.map(s => { const b = aiBadge(s.ai && s.ai[aiKey]); return `
+    <div class="row">
+      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username||'')}</span>
       ${b.summary}
       <span class="actions">
-        <a class="go" href="${esc(s.weeks.week01)}" target="_blank" rel="noopener">View week01 folder &rarr;</a>
-        <a class="go secondary" href="${esc(s.week01.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
+        ${s[weekKey].mainAssignment.fileLink ? `<a class="go" href="${esc(s[weekKey].mainAssignment.fileLink)}" target="_blank" rel="noopener">View file &rarr;</a>` : ''}
+        <a class="go secondary" href="${esc(s[weekKey].mainAssignment.gradeLink)}" target="_blank" rel="noopener">Grade &rarr;</a>
       </span>
       ${b.panel}
     </div>`; }).join('');
 
-  document.getElementById('w01-notemplate-list').innerHTML = notemplate.map(s => { const b = aiBadge(s.ai && s.ai.week1); return `
+  document.getElementById(`${prefix}-notsubmitted-list`).innerHTML = notsub.map(s => `
     <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions">
-        <a class="go" href="${esc(s.root)}" target="_blank" rel="noopener">View repo &rarr;</a>
-        <a class="go secondary" href="${esc(s.week01.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-      ${s.note ? `<span class="reason">${esc(s.note)}</span>` : ''}
-      ${b.panel}
-    </div>`; }).join('');
-
-  document.getElementById('w01-notreported-list').innerHTML = notreported.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions">
-        <a class="go" href="${esc(s.week01.fileLink || s.root)}" target="_blank" rel="noopener">${s.week01.fileLink ? 'View file' : 'View repo'} &rarr;</a>
-        <a class="go secondary" href="${esc(s.week01.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
+      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username||'')}</span>
+      <span class="actions"><a class="go secondary" href="${esc(s[weekKey].mainAssignment.gradeLink)}" target="_blank" rel="noopener">Grade &rarr;</a></span>
     </div>`).join('');
+}
 
-  document.getElementById('w01-nodata-list').innerHTML = nodata.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')} <a href="${esc(s.week01.selfReportLink)}" target="_blank" rel="noopener">Check W01 self-report &rarr;</a></div>
-    </div>`).join('');
+function renderWeek01(){
+  renderCodealong('week01', 'w01ca');
+  renderMainAssignment('week01', 'w01main', 'week1');
 }
 
 function renderWeek02(){
   if (CURRENT_WEEK < 2) { document.getElementById('panel-week02').innerHTML = notCheckedPlaceholder('Week 02', 2); return; }
-  const pass = DATA.filter(s => s.week02.status === 'pass');
-  const fail = DATA.filter(s => s.week02.status === 'fail_no_link');
-  const nofolder = DATA.filter(s => s.week02.status === 'no_folder' || s.week02.status === 'empty_repo');
-  const notreported = DATA.filter(s => s.week02.status === 'not_self_reported');
-  const nodata = DATA.filter(s => s.week02.status === 'no_data' || s.week02.status === 'unresolved');
-
-  document.getElementById('w02-stats').innerHTML =
-    statTile('good', pass.length, 'Confirmed complete') +
-    statTile('warn', fail.length, 'Missing the CSS link') +
-    statTile('bad', nofolder.length, "Haven't started at all") +
-    statTile('unknown', notreported.length, "Didn't self-report") +
-    statTile('unknown', nodata.length, 'No submission data');
-
-  document.getElementById('w02-pass-count').textContent = pass.length + ' students';
-  document.getElementById('w02-fail-count').textContent = fail.length + ' students';
-  document.getElementById('w02-nofolder-count').textContent = nofolder.length + ' students';
-  document.getElementById('w02-notreported-count').textContent = notreported.length + ' students';
-  document.getElementById('w02-nodata-count').textContent = nodata.length + ' students';
-
-  document.getElementById('w02-pass-list').innerHTML = pass.map(s => { const b = aiBadge(s.ai && s.ai.week2); return `
-    <div class="ai-item"><div class="ng-head"><span class="ng-left"><span>${esc(s.name)}</span>${b.summary}</span><a href="${esc(s.week02.selfReportLink)}" target="_blank" rel="noopener">self-report &rarr;</a></div>${b.panel}</div>`; }).join('');
-
-  document.getElementById('w02-fail-list').innerHTML = fail.map(s => { const b = aiBadge(s.ai && s.ai.week2); return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions">
-        <a class="go" href="${esc(s.week02.fileLink)}" target="_blank" rel="noopener">View temple.html &rarr;</a>
-        <a class="go secondary" href="${esc(s.week02.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-      ${s.note ? `<span class="reason"><span class="flag">Note:</span> ${esc(s.note)}</span>` : ''}
-      ${b.panel}
-    </div>`; }).join('');
-
-  document.getElementById('w02-nofolder-list').innerHTML = nofolder.map(s => { const b = aiBadge(s.ai && s.ai.week2); return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions">
-        <a class="go" href="${esc(s.root)}" target="_blank" rel="noopener">View repo &rarr;</a>
-        <a class="go secondary" href="${esc(s.week02.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-      ${s.note ? `<span class="reason">${esc(s.note)}</span>` : (s.week02.status==='empty_repo' ? '<span class="reason">Repo exists but is completely empty &mdash; no commits.</span>' : '')}
-      ${b.panel}
-    </div>`; }).join('');
-
-  document.getElementById('w02-notreported-list').innerHTML = notreported.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions">
-        <a class="go" href="${esc(s.week02.fileLink || s.root)}" target="_blank" rel="noopener">${s.week02.fileLink ? 'View file' : 'View repo'} &rarr;</a>
-        <a class="go secondary" href="${esc(s.week02.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-    </div>`).join('');
-
-  document.getElementById('w02-nodata-list').innerHTML = nodata.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')} <a href="${esc(s.week02.selfReportLink)}" target="_blank" rel="noopener">Check W02 self-report &rarr;</a></div>
-    </div>`).join('');
+  renderCodealong('week02', 'w02ca');
+  renderMainAssignment('week02', 'w02main', 'week2');
 }
 
 function renderWeek03(){
   if (CURRENT_WEEK < 3) { document.getElementById('panel-week03').innerHTML = notCheckedPlaceholder('Week 03', 3); return; }
-  // ---- code-along: index.html <ul class="box"> + <aside class="box"> ----
-  const caPass = DATA.filter(s => s.week03.codealong.status === 'pass');
-  const caFail = DATA.filter(s => s.week03.codealong.status === 'fail' || s.week03.codealong.status === 'no_file');
-  const caNotReported = DATA.filter(s => s.week03.codealong.status === 'not_self_reported');
-  const caNoData = DATA.filter(s => s.week03.codealong.status === 'no_data');
-
-  document.getElementById('w03ca-stats').innerHTML =
-    statTile('good', caPass.length, 'Confirmed complete') +
-    statTile('warn', caFail.length, 'Missing the box class(es)') +
-    statTile('unknown', caNotReported.length, "Didn't self-report") +
-    statTile('unknown', caNoData.length, 'No submission data');
-
-  document.getElementById('w03ca-pass-count').textContent = caPass.length + ' students';
-  document.getElementById('w03ca-fail-count').textContent = caFail.length + ' students';
-  document.getElementById('w03ca-notreported-count').textContent = caNotReported.length + ' students';
-  document.getElementById('w03ca-nodata-count').textContent = caNoData.length + ' students';
-
-  document.getElementById('w03ca-pass-list').innerHTML = caPass.map(s => `
-    <div><span class="ng-left"><span>${esc(s.name)}</span></span></div>`).join('');
-
-  document.getElementById('w03ca-notreported-list').innerHTML = caNotReported.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions">
-        <a class="go" href="${esc(s.week03.codealong.fileLink || s.root)}" target="_blank" rel="noopener">${s.week03.codealong.fileLink ? 'View file' : 'View repo'} &rarr;</a>
-        <a class="go secondary" href="${esc(s.week03.codealong.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-    </div>`).join('');
-
-  document.getElementById('w03ca-fail-list').innerHTML = caFail.map(s => {
-    const d = s.week03.codealong.detail || {};
-    const missing = [];
-    if(s.week03.codealong.status === 'no_file') missing.push('index.html not found');
-    else {
-      if(!d.ul) missing.push('<ul class="box"> missing');
-      if(!d.aside) missing.push('<aside class="box"> missing');
-    }
-    return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions"><a class="go" href="${esc(s.week03.codealong.fileLink)}" target="_blank" rel="noopener">View index.html &rarr;</a></span>
-      <span class="reason">${missing.map(esc).join(', ')}</span>
-    </div>`; }).join('');
-
-  document.getElementById('w03ca-nodata-list').innerHTML = caNoData.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')}</div>
-    </div>`).join('');
-
-  // ---- main assignment (cursory AI signal): wwr/about.html ----
-  const submitted = DATA.filter(s => s.ai && s.ai.week3 && s.ai.week3.checked);
-  const notSubmitted = DATA.filter(s => !(s.ai && s.ai.week3 && s.ai.week3.checked));
-
-  document.getElementById('w03-stats').innerHTML =
-    statTile('good', submitted.length, 'Submitted so far') +
-    statTile('unknown', notSubmitted.length, 'Not submitted yet');
-
-  document.getElementById('w03-submitted-count').textContent = submitted.length + ' students';
-  document.getElementById('w03-notsubmitted-count').textContent = notSubmitted.length + ' students';
-
-  document.getElementById('w03-submitted-list').innerHTML = submitted.map(s => { const b = aiBadge(s.ai.week3); return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions">
-        <a class="go" href="${esc(s.week04.mainAssignment.fileLink)}" target="_blank" rel="noopener">View about.html &rarr;</a>
-      </span>
-      ${b.panel}
-    </div>`; }).join('') || '<div class="plain-row"><div class="detail">No submissions found yet.</div></div>';
-
-  document.getElementById('w03-notsubmitted-list').innerHTML = notSubmitted.map(s => `
-    <div><span class="ng-left"><span>${esc(s.name)}</span></span></div>`).join('');
+  renderCodealong('week03', 'w03ca');
+  renderMainAssignment('week03', 'w03main', 'week3');
 }
 
 function renderWeek04(){
   if (CURRENT_WEEK < 4) { document.getElementById('panel-week04').innerHTML = notCheckedPlaceholder('Week 04', 4); return; }
-  // ---- code-along: index.html's CSS (header+footer, nav flex, grid) ----
-  const caPass = DATA.filter(s => s.week04.codealong.status === 'pass');
-  const caFail = DATA.filter(s => s.week04.codealong.status === 'fail');
-  const caNoCss = DATA.filter(s => s.week04.codealong.status === 'no_css');
-  const caNotReported = DATA.filter(s => s.week04.codealong.status === 'not_self_reported');
-  const caNoData = DATA.filter(s => s.week04.codealong.status === 'no_data');
-
-  document.getElementById('w04ca-stats').innerHTML =
-    statTile('good', caPass.length, 'Confirmed complete') +
-    statTile('warn', caFail.length, 'Missing one or more rules') +
-    statTile('bad', caNoCss.length, 'No CSS found yet') +
-    statTile('unknown', caNotReported.length, "Didn't self-report") +
-    statTile('unknown', caNoData.length, 'No submission data');
-
-  document.getElementById('w04ca-pass-count').textContent = caPass.length + ' students';
-  document.getElementById('w04ca-fail-count').textContent = caFail.length + ' students';
-  document.getElementById('w04ca-nocss-count').textContent = caNoCss.length + ' students';
-  document.getElementById('w04ca-notreported-count').textContent = caNotReported.length + ' students';
-  document.getElementById('w04ca-nodata-count').textContent = caNoData.length + ' students';
-
-  document.getElementById('w04ca-pass-list').innerHTML = caPass.map(s => `
-    <div><span class="ng-left"><span>${esc(s.name)}</span></span></div>`).join('');
-
-  document.getElementById('w04ca-notreported-list').innerHTML = caNotReported.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions">
-        <a class="go" href="${esc(s.week04.codealong.fileLink || s.root)}" target="_blank" rel="noopener">${s.week04.codealong.fileLink ? 'View file' : 'View repo'} &rarr;</a>
-        <a class="go secondary" href="${esc(s.week04.codealong.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-    </div>`).join('');
-
-  document.getElementById('w04ca-fail-list').innerHTML = caFail.map(s => {
-    const d = s.week04.codealong.detail || {};
-    const missing = [];
-    if(!d.pair) missing.push('no header, footer rule');
-    if(!d.navFlex) missing.push('nav missing display:flex');
-    if(!d.grid) missing.push('no display:grid anywhere');
-    return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions"><a class="go" href="${esc(s.week04.codealong.fileLink)}" target="_blank" rel="noopener">View index.html &rarr;</a></span>
-      <span class="reason">${missing.map(esc).join(', ')}</span>
-    </div>`; }).join('');
-
-  document.getElementById('w04ca-nocss-list').innerHTML = caNoCss.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions"><a class="go" href="${esc(s.root)}" target="_blank" rel="noopener">View repo &rarr;</a></span>
-    </div>`).join('');
-
-  document.getElementById('w04ca-nodata-list').innerHTML = caNoData.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')}</div>
-    </div>`).join('');
-
-  // ---- main assignment: wwr stylesheet should show grid or flex ----
-  const mainPass = DATA.filter(s => s.week04.mainAssignment.status === 'pass');
-  const mainFail = DATA.filter(s => s.week04.mainAssignment.status === 'fail');
-  const mainNoData = DATA.filter(s => s.week04.mainAssignment.status === 'no_css' || s.week04.mainAssignment.status === 'no_data');
-
-  document.getElementById('w04main-stats').innerHTML =
-    statTile('good', mainPass.length, 'Confirmed') +
-    statTile('warn', mainFail.length, 'No grid/flex yet') +
-    statTile('unknown', mainNoData.length, 'No CSS / no data');
-
-  document.getElementById('w04main-pass-count').textContent = mainPass.length + ' students';
-  document.getElementById('w04main-fail-count').textContent = mainFail.length + ' students';
-  document.getElementById('w04main-nodata-count').textContent = mainNoData.length + ' students';
-
-  document.getElementById('w04main-pass-list').innerHTML = mainPass.map(s => { const b = aiBadge(s.ai.week4); return `
-    <div class="ai-item"><div class="ng-head"><span class="ng-left"><span>${esc(s.name)}</span>${b.summary}</span><a href="${esc(s.week04.mainAssignment.fileLink)}" target="_blank" rel="noopener">view file &rarr;</a></div>${b.panel}</div>`; }).join('');
-
-  document.getElementById('w04main-fail-list').innerHTML = mainFail.map(s => { const b = aiBadge(s.ai.week4); return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions"><a class="go" href="${esc(s.week04.mainAssignment.fileLink)}" target="_blank" rel="noopener">View about.html &rarr;</a></span>
-      ${b.panel}
-    </div>`; }).join('');
-
-  document.getElementById('w04main-nodata-list').innerHTML = mainNoData.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')}</div>
-    </div>`).join('');
+  renderCodealong('week04', 'w04ca');
+  renderMainAssignment('week04', 'w04main', 'week4');
 }
 
 function renderWeek05(){
   if (CURRENT_WEEK < 5) { document.getElementById('panel-week05').innerHTML = notCheckedPlaceholder('Week 05', 5); return; }
-  // ---- code-along: week05/quiz.html + CSS link + <input> ----
-  const caPass = DATA.filter(s => s.week05.codealong.status === 'pass');
-  const caFail = DATA.filter(s => s.week05.codealong.status === 'fail');
-  const caNoFolder = DATA.filter(s => s.week05.codealong.status === 'no_folder' || s.week05.codealong.status === 'no_file');
-  const caNotReported = DATA.filter(s => s.week05.codealong.status === 'not_self_reported');
-  const caNoData = DATA.filter(s => s.week05.codealong.status === 'no_data');
-
-  document.getElementById('w05ca-stats').innerHTML =
-    statTile('good', caPass.length, 'Confirmed complete') +
-    statTile('warn', caFail.length, 'Missing CSS link or input') +
-    statTile('bad', caNoFolder.length, "Haven't started at all") +
-    statTile('unknown', caNotReported.length, "Didn't self-report") +
-    statTile('unknown', caNoData.length, 'No submission data');
-
-  document.getElementById('w05ca-pass-count').textContent = caPass.length + ' students';
-  document.getElementById('w05ca-fail-count').textContent = caFail.length + ' students';
-  document.getElementById('w05ca-nofolder-count').textContent = caNoFolder.length + ' students';
-  document.getElementById('w05ca-notreported-count').textContent = caNotReported.length + ' students';
-  document.getElementById('w05ca-nodata-count').textContent = caNoData.length + ' students';
-
-  document.getElementById('w05ca-pass-list').innerHTML = caPass.map(s => `
-    <div><span class="ng-left"><span>${esc(s.name)}</span></span></div>`).join('');
-
-  document.getElementById('w05ca-notreported-list').innerHTML = caNotReported.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions">
-        <a class="go" href="${esc(s.week05.codealong.fileLink || s.root)}" target="_blank" rel="noopener">${s.week05.codealong.fileLink ? 'View file' : 'View repo'} &rarr;</a>
-        <a class="go secondary" href="${esc(s.week05.codealong.selfReportLink)}" target="_blank" rel="noopener">Self-report &rarr;</a>
-      </span>
-    </div>`).join('');
-
-  document.getElementById('w05ca-fail-list').innerHTML = caFail.map(s => {
-    const labels = {css_link: 'no stylesheet linked', input: 'no <input> found'};
-    const missing = (s.week05.codealong.missing || []).map(k => labels[k] || k);
-    return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions"><a class="go" href="${esc(s.week05.codealong.fileLink)}" target="_blank" rel="noopener">View quiz.html &rarr;</a></span>
-      <span class="reason">${missing.map(esc).join(', ')}</span>
-    </div>`; }).join('');
-
-  document.getElementById('w05ca-nofolder-list').innerHTML = caNoFolder.map(s => `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      <span class="actions"><a class="go" href="${esc(s.root)}" target="_blank" rel="noopener">View repo &rarr;</a></span>
-    </div>`).join('');
-
-  document.getElementById('w05ca-nodata-list').innerHTML = caNoData.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')}</div>
-    </div>`).join('');
-
-  // ---- main assignment: wwr/contact.html has real content ----
-  const mainPass = DATA.filter(s => s.week05.mainAssignment.status === 'pass');
-  const mainEmpty = DATA.filter(s => s.week05.mainAssignment.status === 'empty');
-  const mainNoData = DATA.filter(s => s.week05.mainAssignment.status === 'no_file' || s.week05.mainAssignment.status === 'no_data');
-
-  document.getElementById('w05main-stats').innerHTML =
-    statTile('good', mainPass.length, 'Confirmed complete') +
-    statTile('warn', mainEmpty.length, 'Still empty') +
-    statTile('unknown', mainNoData.length, 'No file / no data');
-
-  document.getElementById('w05main-pass-count').textContent = mainPass.length + ' students';
-  document.getElementById('w05main-empty-count').textContent = mainEmpty.length + ' students';
-  document.getElementById('w05main-nodata-count').textContent = mainNoData.length + ' students';
-
-  document.getElementById('w05main-pass-list').innerHTML = mainPass.map(s => { const b = aiBadge(s.ai.week5); return `
-    <div class="ai-item"><div class="ng-head"><span class="ng-left"><span>${esc(s.name)}</span>${b.summary}</span><a href="${esc(s.week05.mainAssignment.fileLink)}" target="_blank" rel="noopener">view file &rarr;</a></div>${b.panel}</div>`; }).join('');
-
-  document.getElementById('w05main-empty-list').innerHTML = mainEmpty.map(s => { const b = aiBadge(s.ai.week5); return `
-    <div class="row">
-      <span class="name">${esc(s.name)}</span><span class="uname">${esc(s.username)}</span>
-      ${b.summary}
-      <span class="actions"><a class="go" href="${esc(s.week05.mainAssignment.fileLink)}" target="_blank" rel="noopener">View contact.html &rarr;</a></span>
-      ${b.panel}
-    </div>`; }).join('');
-
-  document.getElementById('w05main-nodata-list').innerHTML = mainNoData.map(s => `
-    <div class="plain-row">
-      <div class="name">${esc(s.name)}</div>
-      <div class="detail">${esc(s.note||'')}</div>
-    </div>`).join('');
+  renderCodealong('week05', 'w05ca');
+  renderMainAssignment('week05', 'w05main', 'week5');
 }
 
-function initTabs(){
-  const buttons = document.querySelectorAll('.tabbtn');
+function initNav(){
+  const buttons = document.querySelectorAll('.navbtn');
   buttons.forEach(btn => {
     btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.tabbtn').forEach(b => b.classList.toggle('active', b === btn));
-      document.querySelectorAll('.tabpanel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
-      try { localStorage.setItem('wdd130-tab', tab); } catch(e) {}
+      const view = btn.dataset.view;
+      document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.viewpanel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + view));
+      try { localStorage.setItem('wdd130-view', view); } catch(e) {}
     });
   });
   try {
-    const saved = localStorage.getItem('wdd130-tab');
+    const saved = localStorage.getItem('wdd130-view');
     if (saved) {
-      const btn = document.querySelector(`.tabbtn[data-tab="${saved}"]`);
+      const btn = document.querySelector(`.navbtn[data-view="${saved}"]`);
       if (btn) btn.click();
     }
   } catch(e) {}
+}
+
+function initSubTabs(){
+  document.querySelectorAll('.tabbar[data-scope]').forEach(bar => {
+    const scope = bar.dataset.scope;
+    const buttons = bar.querySelectorAll('.tabbtn[data-subtab]');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        buttons.forEach(b => {
+          const active = b === btn;
+          b.classList.toggle('active', active);
+          const panel = document.getElementById(`subpanel-${scope}-${b.dataset.subtab}`);
+          if(panel) panel.classList.toggle('active', active);
+        });
+      });
+    });
+  });
 }
 
 function initPageAuditSelect(){
@@ -969,7 +810,8 @@ renderWeek02();
 renderWeek03();
 renderWeek04();
 renderWeek05();
-initTabs();
+initNav();
+initSubTabs();
 initPageAuditSelect();
 initSignalToggles();
 document.getElementById('current-week-note').innerHTML =

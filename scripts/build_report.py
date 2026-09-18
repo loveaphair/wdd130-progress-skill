@@ -341,6 +341,34 @@ def main():
             aid = selfreport_ids.get(wk)
             return f"{domain}/courses/{course_id}/assignments/{aid}/submissions/{sid}" if aid else None
 
+        print("Resolving weekly main assignments...")
+        main_weeks_to_check = [wk for wk in ["week01", "week02", "week03", "week04", "week05"]
+                                if _week_num(wk) <= effective_week]
+        main_assignment_names = {wk: canvas["main_assignments"][wk] for wk in main_weeks_to_check}
+        main_assignment_ids = canvas_api.resolve_assignment_ids(domain, course_id, list(main_assignment_names.values()))
+        main_assignment_ids = {wk: main_assignment_ids[name] for wk, name in main_assignment_names.items()}
+        main_assignment_submissions = {
+            wk: canvas_api.get_assignment_submissions(domain, course_id, aid)
+            for wk, aid in main_assignment_ids.items()
+        }
+
+        def main_status(sid, wk):
+            """completed/zero_grade/not_submitted from the actual Canvas grade
+            -- a graded 0 counts as zero_grade even if something was turned
+            in; everything else that's not literally unsubmitted counts as
+            completed (including work turned in but not graded yet), since
+            the GitHub file is there to review via the AI-use report."""
+            sub = main_assignment_submissions.get(wk, {}).get(sid)
+            if not sub or sub.get("workflow_state") == "unsubmitted":
+                return "not_submitted"
+            if sub.get("score") == 0:
+                return "zero_grade"
+            return "completed"
+
+        def main_grade_link(sid, wk):
+            aid = main_assignment_ids.get(wk)
+            return f"{domain}/courses/{course_id}/assignments/{aid}/submissions/{sid}" if aid else None
+
         students = []
         for sid in fetch_sids:
             u = roster_by_sid[sid]
@@ -439,74 +467,107 @@ def main():
                 v for k, v in css_results.get(sid, {}).items() if v and wwr_prefix in k
             ) or None
 
-            # week01 -- the file/link is always looked up so the report can
-            # link to a student's code even when they haven't self-reported;
-            # only the pass/fail *status* is gated on self-report (per
-            # instructor's explicit call: technical result doesn't matter
-            # for someone who never claimed credit for the work).
-            w01_status = "no_data"
+            # Every code-along check below collapses to exactly 3 outcomes:
+            # "pass" (confirmed complete), "fail" (self-reported but the
+            # technical check found a problem -- reasons list says what),
+            # or "not_self_reported". A missing GitHub username folds into
+            # "fail" (as a reason) rather than a separate bucket -- it's
+            # still true that the student did or didn't self-report; we
+            # just can't show their code. Self-report gating takes priority
+            # over the technical result either way, per the instructor's
+            # explicit call: technical result doesn't matter for someone
+            # who never claimed credit for the work.
+
+            # ---- week01 code-along: favorite-city.html (or favourite-city.html) ----
             w01_file, w01_link = None, None
             w01_sr_link = selfreport_link(sid, "week01")
-            if r:
-                file_status = "no_template" if not week_links.get("week01") else "no_file"
+            w01_ok = False
+            w01_reasons = []
+            if r is None:
+                w01_reasons.append("no GitHub username found for this student")
+            elif not week_links.get("week01"):
+                w01_reasons.append("no week01 folder in the repo")
+            else:
                 for cand in checks["week01"]["candidate_files"]:
                     content = r["files"].get(cand)
                     if content is not None:
                         w01_file = cand.split("/")[-1]
                         w01_link = f"{root}/blob/{branch}/{cand}"
-                        file_status = "pass" if content.strip() else "no_file"
+                        if content.strip():
+                            w01_ok = True
+                        else:
+                            w01_reasons.append(f"{w01_file} exists but is empty")
                         break
-                w01_status = file_status if self_reported(sid, "week01") else "not_self_reported"
+                else:
+                    w01_reasons.append("favorite-city.html / favourite-city.html not found")
+            w01_status = "not_self_reported" if not self_reported(sid, "week01") else ("pass" if w01_ok else "fail")
 
-            # week02 -- same self-report gate as week01
-            w02_status = "no_data" if effective_week >= 2 else "not_checked"
+            # ---- week02 code-along: temple.html + CSS link ----
             w02_link = None
             w02_sr_link = selfreport_link(sid, "week02")
-            if effective_week >= 2 and r:
-                temple = r["files"].get(checks["week02"]["file"])
-                if temple is not None:
-                    w02_link = f"{root}/blob/{branch}/{checks['week02']['file']}"
-                    file_status = "pass" if has_css_link(temple) else "fail_no_link"
+            w02_ok = False
+            w02_reasons = []
+            if effective_week >= 2:
+                if r is None:
+                    w02_reasons.append("no GitHub username found for this student")
+                elif not week_links.get("week02"):
+                    w02_reasons.append("no week02 folder in the repo")
                 else:
-                    file_status = "no_template" if not week_links.get("week02") else "fail_no_link"
-                w02_status = file_status if self_reported(sid, "week02") else "not_self_reported"
-
-            # week03 main assignment (cursory AI signal only)
-            about_html = (r or {}).get("files", {}).get(checks["week03"]["file"]) if effective_week >= 3 else None
-            w03_ai = None
-            if about_html is not None:
-                w03_ai = ai_signals.combined_score(about_html, wwr_css_text)
+                    temple = r["files"].get(checks["week02"]["file"])
+                    if temple is None:
+                        w02_reasons.append("temple.html not found")
+                    else:
+                        w02_link = f"{root}/blob/{branch}/{checks['week02']['file']}"
+                        if has_css_link(temple):
+                            w02_ok = True
+                        else:
+                            w02_reasons.append("temple.html has no <link> to a stylesheet")
+                w02_status = "not_self_reported" if not self_reported(sid, "week02") else ("pass" if w02_ok else "fail")
             else:
-                w03_ai = {"checked": False, "score": None, "level": None, "signals": []}
+                w02_status = "not_checked"
 
-            # week03 code-along: root index.html has <ul class="box"> and an
-            # <aside> also carrying class="box" -- self-report gated
-            w03_ca_status = "no_data" if effective_week >= 3 else "not_checked"
+            about_html = (r or {}).get("files", {}).get(checks["week03"]["file"]) if effective_week >= 3 else None
+            about_link = f"{root}/blob/{branch}/{checks['week03']['file']}" if root else None
+            w03_ai = ai_signals.combined_score(about_html, wwr_css_text) if about_html is not None \
+                else {"checked": False, "score": None, "level": None, "signals": []}
+
+            # ---- week03 code-along: index.html <ul class="box"> + <aside class="box"> ----
             w03_ca_detail = {}
             w03_ca_sr_link = selfreport_link(sid, "week03")
-            if effective_week >= 3 and r:
-                if not self_reported(sid, "week03"):
-                    w03_ca_status = "not_self_reported"
+            w03_ca_ok = False
+            w03_ca_reasons = []
+            if effective_week >= 3:
+                if r is None:
+                    w03_ca_reasons.append("no GitHub username found for this student")
                 elif not index_html:
-                    w03_ca_status = "no_file"
+                    w03_ca_reasons.append("index.html not found")
                 else:
                     w03_ca_detail = {
                         "ul": has_class(index_html, "ul", checks["week03"]["codealong_ul_class"]),
                         "aside": has_class(index_html, "aside", checks["week03"]["codealong_aside_class"]),
                     }
-                    w03_ca_status = "pass" if all(w03_ca_detail.values()) else "fail"
+                    if all(w03_ca_detail.values()):
+                        w03_ca_ok = True
+                    else:
+                        if not w03_ca_detail.get("ul"):
+                            w03_ca_reasons.append('<ul class="box"> missing')
+                        if not w03_ca_detail.get("aside"):
+                            w03_ca_reasons.append('<aside class="box"> missing')
+                w03_ca_status = "not_self_reported" if not self_reported(sid, "week03") else ("pass" if w03_ca_ok else "fail")
+            else:
+                w03_ca_status = "not_checked"
 
-            # week04 code-along: root index.html's linked CSS has a combined
-            # header+footer selector, a nav rule with display:flex, and a
-            # display:grid declaration somewhere -- self-report gated
-            w04_ca_status = "no_data" if effective_week >= 4 else "not_checked"
+            # ---- week04 code-along: index.html's linked CSS (header+footer,
+            # nav flex, grid) ----
             w04_ca_detail = {}
             w04_ca_sr_link = selfreport_link(sid, "week04")
-            if effective_week >= 4 and r:
-                if not self_reported(sid, "week04"):
-                    w04_ca_status = "not_self_reported"
+            w04_ca_ok = False
+            w04_ca_reasons = []
+            if effective_week >= 4:
+                if r is None:
+                    w04_ca_reasons.append("no GitHub username found for this student")
                 elif not css_text_all:
-                    w04_ca_status = "no_css"
+                    w04_ca_reasons.append("no CSS found yet")
                 else:
                     sel_a, sel_b = checks["week04"]["css_combined_selector"]
                     w04_ca_detail = {
@@ -518,51 +579,52 @@ def main():
                             css_text_all, "display", checks["week04"]["css_required_display_property"]
                         ),
                     }
-                    w04_ca_status = "pass" if all(w04_ca_detail.values()) else "fail"
+                    if all(w04_ca_detail.values()):
+                        w04_ca_ok = True
+                    else:
+                        if not w04_ca_detail.get("pair"):
+                            w04_ca_reasons.append("no combined header, footer rule")
+                        if not w04_ca_detail.get("navFlex"):
+                            w04_ca_reasons.append("nav missing display:flex")
+                        if not w04_ca_detail.get("grid"):
+                            w04_ca_reasons.append("no display:grid anywhere")
+                w04_ca_status = "not_self_reported" if not self_reported(sid, "week04") else ("pass" if w04_ca_ok else "fail")
+            else:
+                w04_ca_status = "not_checked"
 
-            # week04 main assignment: wwr stylesheet (e.g. rafting.css) should
-            # show a grid or flex display rule by now
-            w04_main_status = "no_data" if effective_week >= 4 else "not_checked"
-            if effective_week >= 4 and r:
-                if not wwr_css_text:
-                    w04_main_status = "no_css"
-                else:
-                    found = any(
-                        css_has_property_anywhere(wwr_css_text, "display", p)
-                        for p in checks["week04"]["main_assignment_display_properties"]
-                    )
-                    w04_main_status = "pass" if found else "fail"
-
-            # week05 code-along: week05/quiz.html exists, links a stylesheet,
-            # and has at least one <input> -- file/link always looked up,
-            # only the pass/fail status is self-report gated
+            # ---- week05 code-along: week05/quiz.html + CSS link + <input> ----
             quiz_html = (r or {}).get("files", {}).get(checks["week05"]["codealong_file"]) if effective_week >= 5 else None
-            w05_ca_status = "no_data" if effective_week >= 5 else "not_checked"
-            w05_ca_missing = []
             w05_ca_link = None
             w05_ca_sr_link = selfreport_link(sid, "week05")
-            if effective_week >= 5 and r:
-                if quiz_html is None:
-                    file_status = "no_file" if week_links.get("week05") else "no_folder"
+            w05_ca_ok = False
+            w05_ca_reasons = []
+            if effective_week >= 5:
+                if r is None:
+                    w05_ca_reasons.append("no GitHub username found for this student")
+                elif quiz_html is None:
+                    w05_ca_reasons.append("week05/quiz.html not found" if week_links.get("week05") else "haven't started week05 at all")
                 else:
                     w05_ca_link = f"{root}/blob/{branch}/{checks['week05']['codealong_file']}"
                     if checks["week05"]["codealong_requires_css_link"] and not has_css_link(quiz_html):
-                        w05_ca_missing.append("css_link")
+                        w05_ca_reasons.append("no stylesheet linked")
                     if checks["week05"]["codealong_requires_input"] and not has_input(quiz_html):
-                        w05_ca_missing.append("input")
-                    file_status = "pass" if not w05_ca_missing else "fail"
-                w05_ca_status = file_status if self_reported(sid, "week05") else "not_self_reported"
+                        w05_ca_reasons.append("no <input> found")
+                    w05_ca_ok = not w05_ca_reasons
+                w05_ca_status = "not_self_reported" if not self_reported(sid, "week05") else ("pass" if w05_ca_ok else "fail")
+            else:
+                w05_ca_status = "not_checked"
 
-            # week05 main assignment: wwr/contact.html has real content
+            # ---- main assignments: completed/zero_grade/not_submitted, all
+            # from the actual Canvas grade (see main_status/main_grade_link) ----
+            w01_main_status = main_status(sid, "week01")
+            w02_main_status = main_status(sid, "week02") if effective_week >= 2 else "not_checked"
+            w03_main_status = main_status(sid, "week03") if effective_week >= 3 else "not_checked"
+            w04_main_status = main_status(sid, "week04") if effective_week >= 4 else "not_checked"
+            w05_main_status = main_status(sid, "week05") if effective_week >= 5 else "not_checked"
+
+            # week05 main assignment (wwr/contact.html) also feeds its AI score
             contact_html = (r or {}).get("files", {}).get(checks["week05"]["main_assignment_file"]) if effective_week >= 5 else None
-            w05_main_status = "no_data" if effective_week >= 5 else "not_checked"
-            w05_main_link = None
-            if effective_week >= 5 and r:
-                if contact_html is None:
-                    w05_main_status = "no_file"
-                else:
-                    w05_main_link = f"{root}/blob/{branch}/{checks['week05']['main_assignment_file']}"
-                    w05_main_status = "pass" if contact_html.strip() else "empty"
+            contact_link = f"{root}/blob/{branch}/{checks['week05']['main_assignment_file']}" if (root and contact_html is not None) else None
 
             # AI scores for each week's main assignment: week1/2 (index.html,
             # progressively +its css), week3/4 (wwr/about.html -- same file,
@@ -578,30 +640,41 @@ def main():
             fresh_entries[sid] = {
                 "sid": sid, "name": s["name"], "username": username, "repo": repo_used,
                 "root": root, "weeks": week_links,
-                "week01": {"status": w01_status, "file": w01_file, "fileLink": w01_link, "selfReportLink": w01_sr_link},
-                "week02": {"status": w02_status, "fileLink": w02_link, "selfReportLink": w02_sr_link},
+                "week01": {
+                    "codealong": {"status": w01_status, "file": w01_file, "fileLink": w01_link,
+                                  "selfReportLink": w01_sr_link, "reasons": w01_reasons},
+                    "mainAssignment": {"status": w01_main_status, "fileLink": index_link,
+                                        "gradeLink": main_grade_link(sid, "week01")},
+                },
+                "week02": {
+                    "codealong": {"status": w02_status, "fileLink": w02_link,
+                                  "selfReportLink": w02_sr_link, "reasons": w02_reasons},
+                    "mainAssignment": {"status": w02_main_status, "fileLink": index_link,
+                                        "gradeLink": main_grade_link(sid, "week02")},
+                },
                 "week03": {
                     "codealong": {
-                        "status": w03_ca_status, "detail": w03_ca_detail,
+                        "status": w03_ca_status, "detail": w03_ca_detail, "reasons": w03_ca_reasons,
                         "fileLink": index_link, "selfReportLink": w03_ca_sr_link,
                     },
+                    "mainAssignment": {"status": w03_main_status, "fileLink": about_link,
+                                        "gradeLink": main_grade_link(sid, "week03")},
                 },
                 "week04": {
                     "codealong": {
-                        "status": w04_ca_status, "detail": w04_ca_detail,
+                        "status": w04_ca_status, "detail": w04_ca_detail, "reasons": w04_ca_reasons,
                         "fileLink": index_link, "selfReportLink": w04_ca_sr_link,
                     },
-                    "mainAssignment": {
-                        "status": w04_main_status,
-                        "fileLink": f"{root}/blob/{branch}/{checks['week03']['file']}" if root else None,
-                    },
+                    "mainAssignment": {"status": w04_main_status, "fileLink": about_link,
+                                        "gradeLink": main_grade_link(sid, "week04")},
                 },
                 "week05": {
                     "codealong": {
-                        "status": w05_ca_status, "missing": w05_ca_missing,
+                        "status": w05_ca_status, "reasons": w05_ca_reasons,
                         "fileLink": w05_ca_link, "selfReportLink": w05_ca_sr_link,
                     },
-                    "mainAssignment": {"status": w05_main_status, "fileLink": w05_main_link},
+                    "mainAssignment": {"status": w05_main_status, "fileLink": contact_link,
+                                        "gradeLink": main_grade_link(sid, "week05")},
                 },
                 "ai": {"week1": w1_ai, "week2": w2_ai, "week3": w03_ai, "week4": w03_ai, "week5": w05_ai},
                 "note": s["flag"],
@@ -627,7 +700,7 @@ def main():
             all_missing = all(v is None for v in contents.values())
             all_present = all(v is not None for v in contents.values())
             if all_missing:
-                if d["week02"]["status"] in ("no_template",):
+                if not d["weeks"].get("week01"):
                     d["guardrail"] = {"status": "no_template", "note": None}
                 else:
                     d["guardrail"] = {

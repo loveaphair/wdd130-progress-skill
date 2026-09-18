@@ -17,7 +17,14 @@
       "week04": "W04 Code-along Activity: Home Page Layout",
       "week05": "W05 Code-along Activity: Quiz Form"
     },
-    "codealong_selfreport_min_score": 5
+    "codealong_selfreport_min_score": 5,
+    "main_assignments": {
+      "week01": "W01 Assignment: Home Page",
+      "week02": "W02 Assignment: Home Page Enhancement",
+      "week03": "W03 Assignment: Rafting Site – About Us Page",
+      "week04": "W04 Assignment: Rafting Site – Update About Us Page",
+      "week05": "W05 Assignment: Rafting Site – Contact Us Page"
+    }
   },
 
   "github": {
@@ -45,8 +52,7 @@
     "week04": {
       "css_combined_selector": ["header", "footer"],
       "css_nav_display_property": "flex",
-      "css_required_display_property": "grid",
-      "main_assignment_display_properties": ["grid", "flex"]
+      "css_required_display_property": "grid"
     },
     "week05": {
       "codealong_file": "week05/quiz.html",
