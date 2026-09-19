@@ -21,10 +21,25 @@ import urllib.error
 
 GRAPHQL_URL = "https://api.github.com/graphql"
 VALID_USERNAME = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
+# File/folder paths embedded in the query as a GraphQL string literal
+# (`HEAD:{path}`). Some of these come from parsing a student's own HTML
+# (discovered <link href> values), so they're untrusted -- this allowlist
+# keeps them from carrying a quote or escape sequence (e.g. \" or ")
+# that could break out of the string and inject query syntax.
+VALID_PATH = re.compile(r"^[A-Za-z0-9_.\-/]+$")
 
 
 class GitHubError(RuntimeError):
     pass
+
+
+def _filter_valid_paths(paths, kind="path"):
+    valid, dropped = [], []
+    for p in paths:
+        (valid if VALID_PATH.match(p) else dropped).append(p)
+    if dropped:
+        print(f"  Warning: ignoring {len(dropped)} unsafe {kind}(s): {dropped!r}")
+    return valid
 
 
 def _token():
@@ -92,7 +107,8 @@ def check_students_files(students, repo_name, file_paths, folder_paths=None, bat
     Returns {sid: None | {"exists": True, "url": ..., "branch": ...,
              "files": {path: text_or_None}, "folders": {path: bool}}}
     """
-    folder_paths = folder_paths or []
+    file_paths = _filter_valid_paths(file_paths, "file path")
+    folder_paths = _filter_valid_paths(folder_paths or [], "folder path")
     results = {}
     usable = [s for s in students if s.get("username")]
     for start in range(0, len(usable), batch_size):
@@ -131,6 +147,12 @@ def check_custom_paths(items, batch_size=15):
     Returns {sid: {path: text_or_None}}
     """
     results = {}
+    # These paths are discovered by scraping a student's own HTML (e.g. a
+    # <link href> value pulled out of their index.html), so they're
+    # untrusted -- filter each item's list before it's used anywhere,
+    # not just at the point it's interpolated into the query string.
+    for it in items:
+        it["paths"] = _filter_valid_paths(it.get("paths") or [], f"CSS path for {it.get('username')}")
     usable = [it for it in items if it.get("username") and it.get("paths")]
     for start in range(0, len(usable), batch_size):
         batch = usable[start:start + batch_size]
