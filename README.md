@@ -10,6 +10,13 @@ check for whether anyone tampered with the course's `AGENTS.md` /
 Uses the Canvas and GitHub APIs directly (not browser scraping), so it's
 fast and doesn't hit rate limits.
 
+**Claude Code is optional.** The actual work is one bash script and a
+few Python files using only the standard library -- no pip installs, no
+Claude dependency anywhere in the pipeline. Claude is a convenient way to
+run it and get a shareable link back, but anyone who clones this repo can
+run it from a plain terminal too -- see "Running it without Claude Code"
+below.
+
 ## Setup
 
 1. **Install the skill.** Copy this whole folder into `~/.claude/skills/wdd130-progress/`
@@ -18,11 +25,11 @@ fast and doesn't hit rate limits.
 2. **Get a Canvas token**: Canvas -> Account -> Settings -> "New Access Token".
 3. **Get a GitHub token**: github.com/settings/tokens -> generate a
    fine-grained token. No special permissions needed.
-4. **Set both as environment variables** (e.g. in your shell profile):
-   ```
-   export CANVAS_API_TOKEN="paste-here"
-   export GITHUB_TOKEN="paste-here"
-   ```
+4. **Save your tokens**: `cp run.sh.example run.sh`, then paste your two
+   tokens into `run.sh` in a text editor. This file is `.gitignore`'d, so
+   your tokens are never committed. (Alternative: export
+   `CANVAS_API_TOKEN` and `GITHUB_TOKEN` as environment variables
+   yourself instead, e.g. in your shell profile.)
 5. **Copy the config**: `cp config.example.json config.json`, then edit
    `canvas.course_id` to your section's numeric Canvas course ID (visible
    in the course's Canvas URL). Everything else already matches the
@@ -35,6 +42,32 @@ In Claude Code, just ask: *"run the WDD130 progress report"* (or similar --
 the skill's description covers common phrasings). Claude will run
 `scripts/build_report.py` and publish the resulting dashboard as an
 Artifact link.
+
+## Running it without Claude Code
+
+Same script, run straight from a terminal:
+
+```
+bash run.sh --week 3
+```
+
+(`N` is which week of the course to check through, 1-5; omit `--week` to
+check the full course.) Then open the report it writes:
+
+```
+open wdd130_progress_report.html      # macOS
+xdg-open wdd130_progress_report.html  # Linux
+```
+
+Other flags work the same as they do under Claude:
+
+```
+bash run.sh --week 3 --recheck-all          # ignore the cache, recheck everyone
+bash run.sh --week 3 --update "Jane Doe"    # refresh just one/a few students
+```
+
+Results are cached (`config.cache.json`, gitignored) -- a plain re-run
+reuses it and makes no API calls at all.
 
 ## Sharing with a colleague
 
