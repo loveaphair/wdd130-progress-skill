@@ -621,12 +621,32 @@ function initSignalToggles(){
 
 const dashSort = { col: 'name', dir: 1 };
 
-function dashSortValue(s, gr, col){
+// Ascending order requested: Removed > Modified > N/A > OK (Partial/Unreachable
+// slotted in by severity between Modified and N/A since they weren't specified).
+// Blank/not-checked ranks below all of them, so it still sorts like any other
+// blank -- first ascending, last descending.
+const GUARDRAIL_RANK = {
+  removed_targeted: 1,
+  modified: 2,
+  partial: 3,
+  repo_inaccessible: 4,
+  no_template: 5,
+  unmodified: 6,
+};
+function guardrailRank(gr){
+  return (gr && GUARDRAIL_RANK[gr.status]) || 0;
+}
+
+// Text columns whose underlying value doesn't match what's actually shown are
+// wrong to sort by: e.g. the GitHub Repo cell is blank whenever s.root is
+// missing (repo not found on GitHub), which can happen even when a username
+// *was* resolved -- so it must sort by s.root itself, not s.username.
+function dashSortValue(s, col){
   switch(col){
     case 'name': return s.name || '';
     case 'username': return s.username || '';
-    case 'root': case 'home': case 'about': return s.username || '';
-    case 'guardrail': return gr.label || '';
+    case 'root': return s.root || '';
+    case 'home': case 'about': return s.username || '';
     default: return '';
   }
 }
@@ -635,11 +655,13 @@ function renderDashboard(){
   const body = document.getElementById('dash-body');
   const rows = DATA.map(s => ({ s, gr: guardrailBadge(s.guardrail) }));
   rows.sort((a, b) => {
-    const av = dashSortValue(a.s, a.gr, dashSort.col);
-    const bv = dashSortValue(b.s, b.gr, dashSort.col);
-    if(!av && !bv) return 0;
-    if(!av) return 1;   // rows with nothing to show for this column sort last either way
-    if(!bv) return -1;
+    if(dashSort.col === 'guardrail'){
+      return (guardrailRank(a.s.guardrail) - guardrailRank(b.s.guardrail)) * dashSort.dir;
+    }
+    // '' naturally sorts before any non-empty string, so blanks land first
+    // ascending / last descending with no special-casing needed.
+    const av = dashSortValue(a.s, dashSort.col);
+    const bv = dashSortValue(b.s, dashSort.col);
     return av.localeCompare(bv, undefined, {sensitivity:'base'}) * dashSort.dir;
   });
 
