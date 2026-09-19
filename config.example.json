@@ -29,7 +29,9 @@
 
   "github": {
     "repo_name": "wdd130",
-    "repo_name_variations": ["wdd-130", "WDD130", "wd130", "Wdd130", "WD130"]
+    "repo_name_variations": ["wdd-130", "WDD130", "wd130", "Wdd130", "WD130"],
+    "_username_overrides_comment": "Roster name (case-insensitive, exact) -> correct GitHub username. Use when a student's quiz answer names a real but stale/abandoned account -- the actual repo they're using has to be found some other way (e.g. their Home Page assignment submission URL) and hardcoded here, since the report can't tell a stale-but-valid account from a current one on its own.",
+    "username_overrides": {}
   },
 
   "checks": {

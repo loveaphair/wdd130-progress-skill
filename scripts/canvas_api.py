@@ -214,18 +214,6 @@ def resolve_assignment_ids(domain, course_id, names):
     return out
 
 
-def get_assignment_submission_urls(domain, course_id, assignment_id):
-    """Returns {user_id: submitted_url_or_None} for an online_url assignment."""
-    items = _paginated(
-        domain, f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions"
-    )
-    out = {}
-    for s in items:
-        uid = str(s.get("user_id"))
-        out[uid] = s.get("url")
-    return out
-
-
 def get_assignment_scores(domain, course_id, assignment_id):
     """Returns {user_id: score_or_None} for every submission of this
     assignment -- used for the code-along self-report gate (a student's
@@ -241,12 +229,14 @@ def get_assignment_scores(domain, course_id, assignment_id):
 
 
 def get_assignment_submissions(domain, course_id, assignment_id):
-    """Returns {user_id: {"score", "workflow_state", "submitted_at"}} for
-    every submission of this assignment -- used for a graded main
+    """Returns {user_id: {"score", "workflow_state", "submitted_at", "url"}}
+    for every submission of this assignment -- used for a graded main
     assignment, where completed/zero-grade/not-submitted needs more than
     just the score (a Canvas submission record exists for every enrolled
     student even when nothing was turned in, with workflow_state
-    "unsubmitted" and no submitted_at)."""
+    "unsubmitted" and no submitted_at). "url" is only populated for
+    online_url assignments (e.g. the Home Page assignment, whose submitted
+    GitHub Pages/repo URL feeds username resolution)."""
     items = _paginated(
         domain, f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions"
     )
@@ -257,5 +247,6 @@ def get_assignment_submissions(domain, course_id, assignment_id):
             "score": s.get("score"),
             "workflow_state": s.get("workflow_state"),
             "submitted_at": s.get("submitted_at"),
+            "url": s.get("url"),
         }
     return out

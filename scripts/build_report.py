@@ -317,11 +317,9 @@ def main():
         )
         quiz_answers = canvas_api.get_quiz_answers(domain, course_id, quiz_id, question_id)
 
-        print("Resolving Home Page assignment (fallback for missing usernames)...")
         home_assignment_id = canvas_api.resolve_assignment_id(
             domain, course_id, canvas["home_page_assignment_name"]
         )
-        home_urls = canvas_api.get_assignment_submission_urls(domain, course_id, home_assignment_id)
 
         print("Resolving weekly code-along self-report assignments...")
         selfreport_names = canvas["codealong_selfreport_assignments"]
@@ -352,6 +350,17 @@ def main():
             for wk, aid in main_assignment_ids.items()
         }
 
+        # The Home Page assignment IS week01's main assignment in the
+        # standard template, so its submissions (url + score, for username
+        # resolution below) are already fetched above -- reuse them instead
+        # of hitting the same submissions endpoint a second time. Only
+        # falls back to a separate call if a section's config points the
+        # two names at different assignments.
+        if home_assignment_id == main_assignment_ids.get("week01"):
+            home_submissions = main_assignment_submissions["week01"]
+        else:
+            home_submissions = canvas_api.get_assignment_submissions(domain, course_id, home_assignment_id)
+
         def main_status(sid, wk):
             """completed/zero_grade/not_submitted from the actual Canvas grade
             -- a graded 0 counts as zero_grade even if something was turned
@@ -370,18 +379,38 @@ def main():
             return f"{domain}/courses/{course_id}/assignments/{aid}/submissions/{sid}" if aid else None
 
         students = []
+        username_overrides = {
+            name.strip().lower(): uname
+            for name, uname in gh.get("username_overrides", {}).items()
+        }
+
         for sid in fetch_sids:
             u = roster_by_sid[sid]
-            raw = quiz_answers.get(sid)
-            username, flag = extract_username(raw)
-            source = "quiz"
-            if not username:
-                fallback_url = home_urls.get(sid)
-                fb_username = username_from_url(fallback_url)
-                if fb_username:
-                    username = fb_username
-                    flag = None
-                    source = "home_page_fallback"
+            override = username_overrides.get(u["name"].strip().lower())
+            if override:
+                students.append({
+                    "sid": sid, "name": u["name"], "username": override,
+                    "flag": None, "source": "manual_override",
+                })
+                continue
+            home_sub = home_submissions.get(sid) or {}
+            home_score = home_sub.get("score")
+            home_username = username_from_url(home_sub.get("url"))
+
+            if home_username and home_score is not None and home_score > 0:
+                # A graded, non-zero Home Page submission is stronger
+                # evidence of the student's current account than their
+                # (possibly stale) W01 setup quiz answer -- e.g. a student
+                # who abandoned an early throwaway repo for a new one.
+                username, flag, source = home_username, None, "home_page_graded"
+            else:
+                username, flag = extract_username(quiz_answers.get(sid))
+                source = "quiz"
+                if not username and home_username:
+                    # Last resort: quiz didn't parse either, so use the
+                    # Home Page URL even ungraded/zero -- some signal beats
+                    # none for a student who left the quiz blank.
+                    username, flag, source = home_username, None, "home_page_fallback"
             students.append({
                 "sid": sid, "name": u["name"], "username": username,
                 "flag": flag, "source": source,
