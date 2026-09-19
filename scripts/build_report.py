@@ -25,6 +25,13 @@ import canvas_api  # noqa: E402
 import github_graphql  # noqa: E402
 import ai_signals  # noqa: E402
 
+# Windows' default console/file encoding is the system ANSI codepage, not
+# UTF-8 -- student names and config strings (e.g. config.example.json's
+# "WDD130 · Web Fundamentals") contain non-ASCII characters that can
+# otherwise crash with UnicodeDecodeError/UnicodeEncodeError on Windows.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 
@@ -38,7 +45,7 @@ def load_config(path=None):
             f"Copy {example} to config.json and fill in your course_id "
             f"(and any assignment/quiz names that differ from the WDD130 default)."
         )
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -210,14 +217,14 @@ def load_cache(path):
     if not os.path.exists(path):
         return None
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
 
 
 def save_cache(path, cache):
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2)
 
 

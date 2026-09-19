@@ -31,3 +31,16 @@
   by default.
 - Dashboard table is now sortable by any column -- click a header to
   sort A-Z, click again to reverse.
+
+### Fixed (Windows)
+- `config.json`/`config.cache.json` were opened without an explicit
+  encoding, so on Windows Python read/wrote them using the system's ANSI
+  codepage instead of UTF-8. `config.example.json` ships a literal
+  non-ASCII character (the middle dot in "WDD130 &middot; Web
+  Fundamentals"), which every instructor inherits by copying it to
+  `config.json` -- depending on the machine's codepage this silently
+  mangled that text or crashed outright with a UnicodeDecodeError. All
+  file opens in `build_report.py` now explicitly use `encoding="utf-8"`.
+- Also reconfigured stdout/stderr to UTF-8 at startup, since printing a
+  student name with an accented character (many rosters have them) could
+  otherwise crash on Windows' legacy console codepage.
