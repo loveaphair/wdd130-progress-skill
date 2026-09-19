@@ -237,6 +237,11 @@
     color:var(--ink-muted); font-weight:600; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--surface-2);
     position:sticky; top:0;
   }
+  table.dash th[data-sort]{ cursor:pointer; user-select:none; }
+  table.dash th[data-sort]:hover{ color:var(--ink); }
+  table.dash th[data-sort]::after{ content:''; display:inline-block; width:0.9em; opacity:.35; }
+  table.dash th[data-sort].sort-asc::after{ content:'\2191'; opacity:1; }
+  table.dash th[data-sort].sort-desc::after{ content:'\2193'; opacity:1; }
   table.dash td{ padding:9px 14px; border-bottom:1px solid var(--line); white-space:nowrap; }
   table.dash tr:last-child td{ border-bottom:none; }
   table.dash td.namecell{ font-weight:500; white-space:nowrap; }
@@ -299,7 +304,14 @@
       <p class="sec-note">Every student's GitHub username (click to copy), repo, and their live GitHub Pages Home Page and About Page. A dash means we don't have a GitHub username for them yet -- these are constructed links (username.github.io/repo), not verified against what's actually published.</p>
       <div class="tablewrap">
         <table class="dash">
-          <thead><tr><th>Name</th><th>Username</th><th>GitHub Repo</th><th>Home Page</th><th>About Page</th><th>Guardrail</th></tr></thead>
+          <thead><tr>
+            <th data-sort="name">Name</th>
+            <th data-sort="username">Username</th>
+            <th data-sort="root">GitHub Repo</th>
+            <th data-sort="home">Home Page</th>
+            <th data-sort="about">About Page</th>
+            <th data-sort="guardrail">Guardrail</th>
+          </tr></thead>
           <tbody id="dash-body"></tbody>
         </table>
       </div>
@@ -578,7 +590,7 @@ function aiBadge(ai){
   };
 }
 function guardrailBadge(gr){
-  if(!gr || gr.status === 'not_checked') return {summary: `<span class="gr-badge muted">&mdash;</span>`, panel: ''};
+  if(!gr || gr.status === 'not_checked') return {summary: `<span class="gr-badge muted">&mdash;</span>`, panel: '', label: ''};
   const map = {
     unmodified: {cls:'', label:'OK'},
     modified: {cls:'warn', label:'Modified'},
@@ -588,10 +600,11 @@ function guardrailBadge(gr){
     partial: {cls:'warn', label:'Partial'},
   };
   const m = map[gr.status] || {cls:'muted', label:gr.status};
-  if(!gr.note) return {summary: `<span class="gr-badge ${m.cls}">${esc(m.label)}</span>`, panel: ''};
+  if(!gr.note) return {summary: `<span class="gr-badge ${m.cls}">${esc(m.label)}</span>`, panel: '', label: m.label};
   return {
     summary: `<button type="button" class="gr-badge ${m.cls}" data-toggle>${esc(m.label)}</button>`,
-    panel: `<div class="ai-inline-panel" hidden><div class="gr-detail">${esc(gr.note)}</div></div>`
+    panel: `<div class="ai-inline-panel" hidden><div class="gr-detail">${esc(gr.note)}</div></div>`,
+    label: m.label
   };
 }
 
@@ -606,11 +619,31 @@ function initSignalToggles(){
   });
 }
 
+const dashSort = { col: 'name', dir: 1 };
+
+function dashSortValue(s, gr, col){
+  switch(col){
+    case 'name': return s.name || '';
+    case 'username': return s.username || '';
+    case 'root': case 'home': case 'about': return s.username || '';
+    case 'guardrail': return gr.label || '';
+    default: return '';
+  }
+}
+
 function renderDashboard(){
   const body = document.getElementById('dash-body');
-  body.innerHTML = DATA.map(s => {
-    const gr = guardrailBadge(s.guardrail);
-    return `
+  const rows = DATA.map(s => ({ s, gr: guardrailBadge(s.guardrail) }));
+  rows.sort((a, b) => {
+    const av = dashSortValue(a.s, a.gr, dashSort.col);
+    const bv = dashSortValue(b.s, b.gr, dashSort.col);
+    if(!av && !bv) return 0;
+    if(!av) return 1;   // rows with nothing to show for this column sort last either way
+    if(!bv) return -1;
+    return av.localeCompare(bv, undefined, {sensitivity:'base'}) * dashSort.dir;
+  });
+
+  body.innerHTML = rows.map(({s, gr}) => `
     <tr>
       <td class="namecell">${esc(s.name)}</td>
       <td>${s.username ? `<button class="copy-uname" data-uname="${esc(s.username)}">${esc(s.username)}</button>` : '<span class="dash-empty">&mdash;</span>'}</td>
@@ -618,10 +651,11 @@ function renderDashboard(){
       <td>${linkOrDash(pagesLink(s, ''), 'Home Page')}</td>
       <td>${linkOrDash(pagesLink(s, '/wwr/about.html'), 'About Page')}</td>
       <td>${gr.summary}${gr.panel}</td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
+}
 
-  body.addEventListener('click', e => {
+function initCopyUsername(){
+  document.getElementById('dash-body').addEventListener('click', e => {
     const btn = e.target.closest('.copy-uname');
     if(!btn) return;
     const uname = btn.dataset.uname;
@@ -632,6 +666,22 @@ function renderDashboard(){
       setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1200);
     }).catch(() => {});
   });
+}
+
+function initDashSort(){
+  const heads = document.querySelectorAll('table.dash th[data-sort]');
+  heads.forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if(dashSort.col === col) dashSort.dir *= -1;
+      else { dashSort.col = col; dashSort.dir = 1; }
+      heads.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+      th.classList.add(dashSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+      renderDashboard();
+    });
+  });
+  document.querySelector(`table.dash th[data-sort="${dashSort.col}"]`)
+    .classList.add(dashSort.dir === 1 ? 'sort-asc' : 'sort-desc');
 }
 
 function statTile(cls, n, label){
@@ -814,6 +864,8 @@ initNav();
 initSubTabs();
 initPageAuditSelect();
 initSignalToggles();
+initDashSort();
+initCopyUsername();
 document.getElementById('current-week-note').innerHTML =
   `Checked through <strong>Week ${CURRENT_WEEK}</strong> this run` +
   (CURRENT_WEEK < 5 ? ` &mdash; weeks ${CURRENT_WEEK + 1}&ndash;05 skipped (not yet reached).` : '.');
