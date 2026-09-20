@@ -69,6 +69,14 @@ bash run.sh --week 3 --update "Jane Doe"    # refresh just one/a few students
 Results are cached (`config.cache.json`, gitignored) -- a plain re-run
 reuses it and makes no API calls at all.
 
+**On Windows**, `run.sh` needs a bash shell -- use WSL, Git Bash (the
+terminal from Git for Windows), or VSCode's integrated terminal set to
+Git Bash, then run the same `bash run.sh` command above. It won't run
+under PowerShell or cmd.exe directly.
+
+**On Mac/Linux**, if you get a permissions error running it, make the
+script executable first: `chmod +x run.sh`.
+
 ## Sharing with a colleague
 
 Clone this repo into `~/.claude/skills/wdd130-progress/` (personal use) or
