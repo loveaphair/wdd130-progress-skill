@@ -50,6 +50,17 @@ def load_config(path=None):
 
 
 def extract_username(raw):
+    """Pulls a plausible GitHub username out of free-text quiz answers,
+    then gates the result through GitHub's actual username rules --
+    catches typos like a ':' where a '-' belonged, which the heuristics
+    below (aimed at emails/phrases/stray words) don't."""
+    candidate, flag = _extract_candidate(raw)
+    if candidate and not github_graphql.is_valid_username(candidate):
+        return None, f'not a valid GitHub username (only letters, numbers, and hyphens allowed): "{candidate}"'
+    return candidate, flag
+
+
+def _extract_candidate(raw):
     """Same heuristic used in the original manual review: pulls a plausible
     GitHub username out of free-text quiz answers, flagging the ones that
     clearly aren't one (blank, an email, a full name, "yes", etc.)."""
@@ -385,43 +396,120 @@ def main():
             aid = main_assignment_ids.get(wk)
             return f"{domain}/courses/{course_id}/assignments/{aid}/submissions/{sid}" if aid else None
 
-        students = []
         username_overrides = {
             name.strip().lower(): uname
             for name, uname in gh.get("username_overrides", {}).items()
         }
 
+        # ---- phase 1: cheap, no-API-call pass -- manual overrides and
+        # graded Home Page submissions resolve immediately; everyone else
+        # is left "provisional" pending the GitHub verification passes
+        # below. An unsubmitted Home Page assignment never contributes a
+        # username candidate, graded or not -- there's nothing to trust it
+        # for. ----
+        provisional = []
         for sid in fetch_sids:
             u = roster_by_sid[sid]
             override = username_overrides.get(u["name"].strip().lower())
             if override:
-                students.append({
+                provisional.append({
                     "sid": sid, "name": u["name"], "username": override,
-                    "flag": None, "source": "manual_override",
+                    "flag": None, "source": "manual_override", "resolved": True,
                 })
                 continue
+
             home_sub = home_submissions.get(sid) or {}
-            home_score = home_sub.get("score")
-            home_username = username_from_url(home_sub.get("url"))
+            home_submitted = bool(home_sub) and home_sub.get("workflow_state") != "unsubmitted"
+            home_score = home_sub.get("score") if home_submitted else None
+            raw_home_username = username_from_url(home_sub.get("url")) if home_submitted else None
+            home_username = raw_home_username if raw_home_username and github_graphql.is_valid_username(raw_home_username) else None
 
             if home_username and home_score is not None and home_score > 0:
                 # A graded, non-zero Home Page submission is stronger
                 # evidence of the student's current account than their
                 # (possibly stale) W01 setup quiz answer -- e.g. a student
                 # who abandoned an early throwaway repo for a new one.
-                username, flag, source = home_username, None, "home_page_graded"
-            else:
-                username, flag = extract_username(quiz_answers.get(sid))
-                source = "quiz"
-                if not username and home_username:
-                    # Last resort: quiz didn't parse either, so use the
-                    # Home Page URL even ungraded/zero -- some signal beats
-                    # none for a student who left the quiz blank.
-                    username, flag, source = home_username, None, "home_page_fallback"
-            students.append({
-                "sid": sid, "name": u["name"], "username": username,
-                "flag": flag, "source": source,
+                provisional.append({
+                    "sid": sid, "name": u["name"], "username": home_username,
+                    "flag": None, "source": "home_page_graded", "resolved": True,
+                })
+                continue
+
+            quiz_username, quiz_flag = extract_username(quiz_answers.get(sid))
+            provisional.append({
+                "sid": sid, "name": u["name"], "username": None, "flag": None, "source": None,
+                "resolved": False,
+                "_home_username": home_username, "_home_had_url": bool(raw_home_username),
+                "_quiz_username": quiz_username, "_quiz_flag": quiz_flag,
             })
+
+        # ---- phase 2: a 0-graded (or ungraded) Home Page submission is
+        # often a student who linked their raw GitHub repo instead of
+        # their published Pages site -- the wrong link for the assignment,
+        # but still real evidence of their account. Verify by checking for
+        # an actual non-empty wdd130 repo (or a configured name variation)
+        # under that username before trusting it. ----
+        repo_names_to_try = [gh["repo_name"], *gh.get("repo_name_variations", [])]
+        remaining = [{"sid": s["sid"], "username": s["_home_username"]}
+                     for s in provisional if not s["resolved"] and s["_home_username"]]
+        verified_repo_name = {}
+        for repo_name in repo_names_to_try:
+            if not remaining:
+                break
+            batch_result = github_graphql.check_students_files(
+                remaining, repo_name, [], [], require_nonempty=True
+            )
+            still_missing = []
+            for c in remaining:
+                if batch_result.get(c["sid"]):
+                    verified_repo_name[c["sid"]] = repo_name
+                else:
+                    still_missing.append(c)
+            remaining = still_missing
+        if verified_repo_name:
+            print(f"  verified {len(verified_repo_name)} Home Page submission(s) with a real "
+                  f"wdd130 repo despite a low/no grade")
+
+        for s in provisional:
+            if not s["resolved"] and s["sid"] in verified_repo_name:
+                s.update(username=s["_home_username"], flag=None,
+                          source="home_page_repo_verified", resolved=True)
+
+        # ---- phase 3: still nothing? fall back to the quiz answer, but
+        # only trust it once we've confirmed the account actually exists on
+        # GitHub -- a stale/nonexistent account is worse than no username
+        # at all. ----
+        quiz_candidates = [s["_quiz_username"] for s in provisional
+                            if not s["resolved"] and s["_quiz_username"]]
+        existence = github_graphql.check_users_exist(quiz_candidates)
+        if quiz_candidates:
+            print(f"  confirmed {sum(existence.values())}/{len(quiz_candidates)} "
+                  f"quiz-answer GitHub account(s) exist")
+
+        for s in provisional:
+            if s["resolved"]:
+                continue
+            qu, qf = s["_quiz_username"], s["_quiz_flag"]
+            if qu and existence.get(qu):
+                s.update(username=qu, flag=None, source="quiz", resolved=True)
+                continue
+            reasons = []
+            if s["_home_username"]:
+                reasons.append(f'Home Page submission links to GitHub user "{s["_home_username"]}", '
+                                f'but no non-empty wdd130 repo was found for them')
+            elif s["_home_had_url"]:
+                reasons.append("Home Page submission URL isn't a valid GitHub username")
+            if qu:
+                reasons.append(f'quiz answer\'s GitHub account "{qu}" does not appear to exist')
+            elif qf:
+                reasons.append(f"quiz answer {qf}")
+            s.update(username=None, flag="; ".join(reasons) or "blank/unanswered", source=None)
+
+        students = [
+            {"sid": s["sid"], "name": s["name"], "username": s["username"],
+             "flag": s["flag"], "source": s["source"]}
+            for s in provisional
+        ]
 
         print(f"  {sum(1 for s in students if s['username'])} usable usernames, "
               f"{sum(1 for s in students if not s['username'])} unresolved")
@@ -485,6 +573,12 @@ def main():
         for s in students:
             sid = s["sid"]
             username = s["username"]
+            # A resolved-but-repo-not-found username (e.g. a quiz answer
+            # confirmed to be a real GitHub account, but with no matching
+            # wdd130 repo) shouldn't be reported the same as no username
+            # having been found at all.
+            no_repo_reason = (f'no wdd130 repo found for GitHub user "{username}"' if username
+                               else "no GitHub username found for this student")
             r = gh_results.get(sid)
             repo_used = (r or {}).get("repo_name_used", gh["repo_name"])
             branch = (r or {}).get("branch", "main")
@@ -520,7 +614,7 @@ def main():
             w01_ok = False
             w01_reasons = []
             if r is None:
-                w01_reasons.append("no GitHub username found for this student")
+                w01_reasons.append(no_repo_reason)
             elif not week_links.get("week01"):
                 w01_reasons.append("no week01 folder in the repo")
             else:
@@ -545,7 +639,7 @@ def main():
             w02_reasons = []
             if effective_week >= 2:
                 if r is None:
-                    w02_reasons.append("no GitHub username found for this student")
+                    w02_reasons.append(no_repo_reason)
                 elif not week_links.get("week02"):
                     w02_reasons.append("no week02 folder in the repo")
                 else:
@@ -574,7 +668,7 @@ def main():
             w03_ca_reasons = []
             if effective_week >= 3:
                 if r is None:
-                    w03_ca_reasons.append("no GitHub username found for this student")
+                    w03_ca_reasons.append(no_repo_reason)
                 elif not index_html:
                     w03_ca_reasons.append("index.html not found")
                 else:
@@ -601,7 +695,7 @@ def main():
             w04_ca_reasons = []
             if effective_week >= 4:
                 if r is None:
-                    w04_ca_reasons.append("no GitHub username found for this student")
+                    w04_ca_reasons.append(no_repo_reason)
                 elif not css_text_all:
                     w04_ca_reasons.append("no CSS found yet")
                 else:
@@ -636,7 +730,7 @@ def main():
             w05_ca_reasons = []
             if effective_week >= 5:
                 if r is None:
-                    w05_ca_reasons.append("no GitHub username found for this student")
+                    w05_ca_reasons.append(no_repo_reason)
                 elif quiz_html is None:
                     w05_ca_reasons.append("week05/quiz.html not found" if week_links.get("week05") else "haven't started week05 at all")
                 else:
@@ -674,8 +768,8 @@ def main():
                 guardrail_raw[gfile][sid] = (r or {}).get("files", {}).get(gfile)
 
             fresh_entries[sid] = {
-                "sid": sid, "name": s["name"], "username": username, "repo": repo_used,
-                "root": root, "weeks": week_links,
+                "sid": sid, "name": s["name"], "username": username, "usernameSource": s["source"],
+                "repo": repo_used, "root": root, "weeks": week_links,
                 "week01": {
                     "codealong": {"status": w01_status, "file": w01_file, "fileLink": w01_link,
                                   "selfReportLink": w01_sr_link, "reasons": w01_reasons},

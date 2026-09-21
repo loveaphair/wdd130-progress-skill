@@ -301,7 +301,7 @@
     </div>
 
     <div id="panel-dashboard" class="viewpanel active">
-      <p class="sec-note">Every student's GitHub username (click to copy), repo, and their live GitHub Pages Home Page and About Page. A dash means we don't have a GitHub username for them yet -- these are constructed links (username.github.io/repo), not verified against what's actually published.</p>
+      <p class="sec-note">Every student's GitHub username (click to copy), repo, and their live GitHub Pages Home Page and About Page. A dash means we don't have a GitHub username for them yet -- these are constructed links (username.github.io/repo), not verified against what's actually published. 🛠️ = resolved from the quiz answer, 📝 = resolved from the Home Page submission.</p>
       <div class="tablewrap">
         <table class="dash">
           <thead><tr>
@@ -531,7 +531,7 @@
         </section>
         <section>
           <h3>Username resolution</h3>
-          <p>__QUIZ_NAME__ quiz (__QUIZ_ID__), question containing &ldquo;__QUIZ_QUESTION_HINT__&rdquo;, "Your Answer" &mdash; falling back to the __HOME_PAGE_ASSIGNMENT_NAME__ assignment (__HOME_PAGE_ASSIGNMENT_ID__) submission URL when the quiz answer wasn't a usable username.</p>
+          <p>In order: (1) if the __HOME_PAGE_ASSIGNMENT_NAME__ assignment (__HOME_PAGE_ASSIGNMENT_ID__) submission is graded above 0, its URL's username is trusted directly (📝); (2) otherwise, if that submission's URL yields a validly-formatted username, we check GitHub for a real, non-empty repo under it &mdash; a 0 often just means the student linked their raw repo instead of their published Pages site, not that the account is fake (also 📝); (3) if that doesn't resolve anything, the __QUIZ_NAME__ quiz (__QUIZ_ID__) answer to the question containing &ldquo;__QUIZ_QUESTION_HINT__&rdquo; is parsed for a validly-formatted username and, if found, confirmed to exist as a real GitHub account (🛠️); (4) if none of the above resolve, the student is left unresolved (dash) rather than guessed at, with a note explaining what was tried.</p>
         </section>
         <section>
           <h3>Week 01 check</h3>
@@ -651,6 +651,23 @@ function dashSortValue(s, col){
   }
 }
 
+// Where a resolved username came from -- manual overrides get no icon
+// (the instructor typed it in themselves, so there's no ambiguity).
+const SRC_EMOJI = { quiz: '🛠️', home_page_graded: '📝', home_page_repo_verified: '📝' };
+const SRC_LABEL = {
+  quiz: 'Resolved from the quiz answer (GitHub account existence confirmed)',
+  home_page_graded: 'Resolved from the graded Home Page submission URL',
+  home_page_repo_verified: 'Resolved from the Home Page submission URL (repo confirmed despite a low/no grade)',
+};
+
+function usernameCell(s){
+  if(!s.username) return '<span class="dash-empty">&mdash;</span>';
+  const emoji = SRC_EMOJI[s.usernameSource];
+  const label = SRC_LABEL[s.usernameSource] || '';
+  const text = (emoji ? emoji + ' ' : '') + esc(s.username);
+  return `<button class="copy-uname" data-uname="${esc(s.username)}" title="${esc(label)}">${text}</button>`;
+}
+
 function renderDashboard(){
   const body = document.getElementById('dash-body');
   const rows = DATA.map(s => ({ s, gr: guardrailBadge(s.guardrail) }));
@@ -668,7 +685,7 @@ function renderDashboard(){
   body.innerHTML = rows.map(({s, gr}) => `
     <tr>
       <td class="namecell">${esc(s.name)}</td>
-      <td>${s.username ? `<button class="copy-uname" data-uname="${esc(s.username)}">${esc(s.username)}</button>` : '<span class="dash-empty">&mdash;</span>'}</td>
+      <td>${usernameCell(s)}</td>
       <td>${linkOrDash(s.root, 'GitHub Repo')}</td>
       <td>${linkOrDash(pagesLink(s, ''), 'Home Page')}</td>
       <td>${linkOrDash(pagesLink(s, '/wwr/about.html'), 'About Page')}</td>

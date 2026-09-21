@@ -20,7 +20,18 @@ import urllib.request
 import urllib.error
 
 GRAPHQL_URL = "https://api.github.com/graphql"
-VALID_USERNAME = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$")
+# GitHub's actual username rule: alphanumeric, hyphens allowed but not
+# leading/trailing/doubled, max 39 chars. The hyphen branch's lookahead
+# requires an alphanumeric right after it, which rules out a trailing
+# hyphen (nothing follows) and a doubled hyphen (a hyphen would follow)
+# without needing separate checks.
+VALID_USERNAME = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$")
+
+
+def is_valid_username(name):
+    return bool(name) and bool(VALID_USERNAME.match(name))
+
+
 # File/folder paths embedded in the query as a GraphQL string literal
 # (`HEAD:{path}`). Some of these come from parsing a student's own HTML
 # (discovered <link href> values), so they're untrusted -- this allowlist
@@ -96,13 +107,19 @@ def _build_query(batch, repo_name, file_paths, folder_paths):
     return "query {\n" + "\n".join(parts) + "\n}"
 
 
-def check_students_files(students, repo_name, file_paths, folder_paths=None, batch_size=15):
+def check_students_files(students, repo_name, file_paths, folder_paths=None, batch_size=15,
+                          require_nonempty=False):
     """
     students: [{"sid": ..., "username": ...}, ...]
     file_paths: ["index.html", "week01/favorite-city.html", ...] -- blob
         (file) checks, identical for every student in one request.
     folder_paths: ["week01", "week02", ...] -- tree (folder) existence
         checks, same batching.
+    require_nonempty: when True, a repo with no resolvable default branch
+        (i.e. it exists but has zero commits -- an empty scaffold) counts
+        as not found. Used to verify a candidate username actually has a
+        real wdd130 repo, not just to fetch file contents for one already
+        trusted.
 
     Returns {sid: None | {"exists": True, "url": ..., "branch": ...,
              "files": {path: text_or_None}, "folders": {path: bool}}}
@@ -124,12 +141,16 @@ def check_students_files(students, repo_name, file_paths, folder_paths=None, bat
             if not repo:
                 results[s["sid"]] = None
                 continue
+            branch = (repo.get("defaultBranchRef") or {}).get("name")
+            if require_nonempty and branch is None:
+                results[s["sid"]] = None
+                continue
             files = {path: (repo.get(f"f{j}") or {}).get("text") for j, path in enumerate(file_paths)}
             folders = {path: repo.get(f"d{j}") is not None for j, path in enumerate(folder_paths)}
             results[s["sid"]] = {
                 "exists": True,
                 "url": repo["url"],
-                "branch": (repo.get("defaultBranchRef") or {}).get("name", "main"),
+                "branch": branch or "main",
                 "files": files,
                 "folders": folders,
             }
@@ -186,7 +207,8 @@ def check_custom_paths(items, batch_size=15):
     return results
 
 
-def check_repo_variations(students_missing, repo_variations, file_paths, folder_paths=None, batch_size=15):
+def check_repo_variations(students_missing, repo_variations, file_paths, folder_paths=None, batch_size=15,
+                           require_nonempty=False):
     """
     For students whose primary repo name didn't resolve, try each variation
     in turn (e.g. 'wdd-130', 'WDD130'). Returns the same shape as
@@ -197,7 +219,8 @@ def check_repo_variations(students_missing, repo_variations, file_paths, folder_
     for variation in repo_variations:
         if not remaining:
             break
-        batch_result = check_students_files(remaining, variation, file_paths, folder_paths, batch_size)
+        batch_result = check_students_files(remaining, variation, file_paths, folder_paths, batch_size,
+                                             require_nonempty=require_nonempty)
         still_missing = []
         for s in remaining:
             r = batch_result.get(s["sid"])
@@ -208,3 +231,23 @@ def check_repo_variations(students_missing, repo_variations, file_paths, folder_
                 still_missing.append(s)
         remaining = still_missing
     return found, remaining
+
+
+def check_users_exist(usernames, batch_size=25):
+    """
+    Returns {username: True/False} -- whether that login exists as a real
+    GitHub account at all, independent of any repo. Used as a last-resort
+    sanity check for a quiz-derived username when no matching wdd130 repo
+    (or configured name variation) could be found for it.
+    """
+    valid = [u for u in dict.fromkeys(usernames) if is_valid_username(u)]
+    results = {}
+    for start in range(0, len(valid), batch_size):
+        batch = valid[start:start + batch_size]
+        alias_map = {f"u{i}": u for i, u in enumerate(batch)}
+        parts = [f'u{i}: user(login: "{u}") {{ login }}' for i, u in enumerate(batch)]
+        query = "query {\n" + "\n".join(parts) + "\n}"
+        data = _post(query).get("data") or {}
+        for alias, u in alias_map.items():
+            results[u] = bool(data.get(alias))
+    return results

@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-09-20
+
+### Fixed
+- A quiz answer with a character GitHub doesn't allow in a username (e.g.
+  a `:` typed where a `-` belonged) was accepted as-is instead of being
+  rejected -- it silently fell out of the batched GitHub query later,
+  reporting every week as "no GitHub username found for this student"
+  even though a (garbled) username had, in fact, been found. Username
+  resolution now validates against GitHub's actual rules (letters,
+  numbers, hyphens only; no leading/trailing/doubled hyphens; max 39
+  chars) before trusting any candidate.
+- A student who scored 0 on the Home Page assignment because they linked
+  their raw GitHub repo instead of their published Pages site was treated
+  as no better resolved than a stale quiz answer. Resolution now checks
+  a 0-graded (or ungraded) Home Page submission's username for an actual
+  non-empty wdd130 repo (or a configured name variation) before falling
+  back to the quiz -- and an unsubmitted Home Page assignment is no
+  longer used as a username source at all, graded or not.
+- A quiz-derived username is now confirmed to exist as a real GitHub
+  account (independent of whether it has a matching repo) before being
+  trusted, rather than being used purely on format.
+- The "no GitHub username found for this student" reason no longer shows
+  up for a student whose username *was* resolved but whose repo just
+  wasn't found -- that case now says so explicitly (naming the
+  username), instead of implying nothing was ever found.
+
+### Added
+- Dashboard's Username column now shows 🛠️ for a username resolved from
+  the quiz answer, or 📝 for one resolved from a Home Page submission, so
+  the instructor can see at a glance where each came from (hover for the
+  full explanation). An instructor-entered `username_overrides` entry
+  gets no icon, since there's no ambiguity about its source.
+
 ## 2026-09-19
 
 ### Fixed
