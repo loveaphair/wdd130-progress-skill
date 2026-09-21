@@ -51,16 +51,16 @@ def scan_html(html):
         signals.append("HTML comments present"); score += 6
 
     if re.search(r"\baria-[a-z]+\s*=", html, re.I) or re.search(r"\brole\s*=", html, re.I):
-        signals.append("ARIA/role attributes"); score += 10
+        signals.append("ARIA/role attributes"); score += 30
 
     if re.search(r'\bstyle\s*=\s*"', html):
         signals.append("inline style= attributes"); score += 10
 
     if re.search(r"<style[\s>]", html, re.I):
-        signals.append("embedded <style> block"); score += 15
+        signals.append("embedded <style> block"); score += 20
 
     if re.search(r"<script[\s>]", html, re.I):
-        signals.append("JavaScript present"); score += 15
+        signals.append("JavaScript present"); score += 50
 
     if re.search(r"og:[a-z]+|twitter:card", html, re.I):
         signals.append("Open Graph/Twitter meta tags"); score += 8
@@ -99,9 +99,11 @@ def scan_css(css):
         signals.append("layered shadows/gradients"); score += 8
 
     rule_count = css.count("{")
-    if rule_count >= 40:
+    if rule_count >= 100:
+        signals.append(f"very high rule count ({rule_count} rules)"); score += 30
+    elif rule_count >= 60:
         signals.append(f"high rule count ({rule_count} rules)"); score += 10
-    elif rule_count >= 20:
+    elif rule_count >= 30:
         signals.append(f"moderate rule count ({rule_count} rules)"); score += 4
 
     return {"score": min(score, 100), "signals": signals}

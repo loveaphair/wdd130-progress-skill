@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-21
+
+### Changed
+- Raised several AI-usage signal weights in `ai_signals.py`: JavaScript
+  present (15 -> 50), ARIA/role attributes (10 -> 30), embedded
+  `<style>` block (15 -> 20). None of these are taught in weeks 1-5, so
+  their presence is a stronger tell than the old weights gave it credit
+  for.
+- CSS rule-count scoring now has three tiers instead of two: "moderate"
+  at 30+ rules (was 20+), "high" at 60+ rules (was 40+), and a new "very
+  high" tier at 100+ rules (+30) to separate genuinely bloated
+  stylesheets from merely thorough ones.
+
 ## 2026-09-20
 
 ### Fixed
