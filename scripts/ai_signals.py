@@ -95,7 +95,7 @@ def scan_css(css):
     if "@keyframes" in css or "transition" in css or "cubic-bezier" in css:
         signals.append("animations/transitions"); score += 10
 
-    if css.count("box-shadow") >= 2 or "linear-gradient" in css:
+    if "linear-gradient" in css:
         signals.append("layered shadows/gradients"); score += 8
 
     rule_count = css.count("{")
