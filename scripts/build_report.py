@@ -36,6 +36,13 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
 
 
+def normalize_name(name):
+    """Collapse whitespace runs before matching names -- Canvas roster names
+    sometimes carry stray double spaces (e.g. a blanked-out middle name)
+    that would otherwise silently break an exact/substring name match."""
+    return " ".join(name.split()).lower()
+
+
 def load_config(path=None):
     path = path or os.path.join(SKILL_DIR, "config.json")
     if not os.path.exists(path):
@@ -249,11 +256,12 @@ def resolve_update_targets(query, roster, cache):
     sids = set()
     for term in [t.strip() for t in query.split(",") if t.strip()]:
         term_l = term.lower()
+        term_n = normalize_name(term)
         uname_matches = [
             sid for sid, d in cached_students.items()
             if d.get("username") and d["username"].lower() == term_l
         ]
-        name_matches = [u["id"] for u in roster if term_l in u["name"].lower()]
+        name_matches = [u["id"] for u in roster if term_n in normalize_name(u["name"])]
         combined = list(dict.fromkeys(uname_matches + name_matches))
         if len(combined) == 1:
             sids.add(combined[0])
@@ -397,7 +405,7 @@ def main():
             return f"{domain}/courses/{course_id}/assignments/{aid}/submissions/{sid}" if aid else None
 
         username_overrides = {
-            name.strip().lower(): uname
+            normalize_name(name): uname
             for name, uname in gh.get("username_overrides", {}).items()
         }
 
@@ -410,7 +418,7 @@ def main():
         provisional = []
         for sid in fetch_sids:
             u = roster_by_sid[sid]
-            override = username_overrides.get(u["name"].strip().lower())
+            override = username_overrides.get(normalize_name(u["name"]))
             if override:
                 provisional.append({
                     "sid": sid, "name": u["name"], "username": override,
