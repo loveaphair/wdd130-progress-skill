@@ -1,5 +1,6 @@
 config.json
 run.sh
+run.py
 *.cache.json
 wdd130_progress_report.html
 __pycache__/

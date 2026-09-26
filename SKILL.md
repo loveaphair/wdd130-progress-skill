@@ -27,20 +27,24 @@ chat -- but pasting long tokens through the chat `!` bridge as an inline
 practice (the bridge can mangle line breaks/whitespace in long or
 multi-line pasted commands). Prefer this instead:
 
-1. Check whether `run.sh` exists next to this file. If not, tell the
-   instructor to copy `run.sh.example` to `run.sh` **themselves, in a text
-   editor** (not by pasting into chat) and fill in their two tokens there:
+1. Check whether `run.sh` or `run.py` exists next to this file. If
+   neither does, tell the instructor to copy `run.sh.example` to `run.sh`
+   (Mac/Linux/WSL/Git Bash) or `run.py.example` to `run.py` (Windows, or
+   anywhere bash is inconvenient -- plain Python, standard library only)
+   **themselves, in a text editor** (not by pasting into chat) and fill in
+   their two tokens there:
    - **Canvas**: generated at Canvas -> Account -> Settings -> "New Access
      Token".
    - **GitHub**: a fine-grained token at github.com/settings/tokens. No
      special scopes needed -- student repos are public; it only exists to
      raise the API rate limit.
-2. From then on, running the report is just `bash run.sh` -- a short
-   command that isn't vulnerable to the long-line paste corruption. This
-   also means the instructor doesn't need to re-paste tokens every run.
+2. From then on, running the report is just `bash run.sh` or
+   `python run.py` (whichever the instructor set up) -- a short command
+   that isn't vulnerable to the long-line paste corruption. This also
+   means the instructor doesn't need to re-paste tokens every run.
 
-`run.sh` is gitignored. If the instructor would rather not keep a
-tokens-bearing file around at all, the fallback is the old one-shot
+`run.sh`/`run.py` are gitignored. If the instructor would rather not keep
+a tokens-bearing file around at all, the fallback is the old one-shot
 approach -- export both tokens and run the script in a single command,
 typed directly into a real terminal window (not the chat `!` bridge, which
 is what actually broke) -- see the `python3 scripts/build_report.py`
@@ -73,7 +77,10 @@ GitHub API calls for files that don't exist. Pass their answer as
 `--week N`; if they want the full history regardless of pacing, omit the
 flag (defaults to checking all 5 weeks).
 
-Preferred: `bash run.sh --week N` (see "Before running" above).
+Preferred: `bash run.sh --week N` or `python run.py --week N`, whichever
+the instructor set up (see "Before running" above). Use whatever command
+their system's Python actually answers to for `run.py` -- `python`,
+`python3`, or `py -3`.
 
 Fallback, in a real terminal window (not the chat `!` bridge):
 ```
@@ -202,6 +209,8 @@ understand the whole pipeline.
 
 Hand them this whole folder. Their setup is: generate their own two
 tokens, copy `config.example.json` to `config.json`, fill in their
-`course_id`, copy `run.sh.example` to `run.sh` and fill in their tokens
-there, then `bash run.sh`. No other WDD130-specific knowledge should be
-required since the defaults already match the shared course template.
+`course_id`, copy `run.sh.example` to `run.sh` (or `run.py.example` to
+`run.py` on Windows/no-bash) and fill in their tokens there, then
+`bash run.sh` or `python run.py`. No other WDD130-specific knowledge
+should be required since the defaults already match the shared course
+template.

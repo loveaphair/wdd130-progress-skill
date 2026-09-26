@@ -10,12 +10,12 @@ check for whether anyone tampered with the course's `AGENTS.md` /
 Uses the Canvas and GitHub APIs directly (not browser scraping), so it's
 fast and doesn't hit rate limits.
 
-**Claude Code is optional.** The actual work is one bash script and a
-few Python files using only the standard library -- no pip installs, no
-Claude dependency anywhere in the pipeline. Claude is a convenient way to
-run it and get a shareable link back, but anyone who clones this repo can
-run it from a plain terminal too -- see "Running it without Claude Code"
-below.
+**Claude Code is optional.** The actual work is a few Python files using
+only the standard library -- no pip installs, no Claude dependency
+anywhere in the pipeline. Claude is a convenient way to run it and get a
+shareable link back, but anyone who clones this repo can run it from a
+plain terminal too (bash or plain Python, Mac/Linux/Windows) -- see
+"Running it without Claude Code" below.
 
 ## Setup
 
@@ -25,11 +25,12 @@ below.
 2. **Get a Canvas token**: Canvas -> Account -> Settings -> "New Access Token".
 3. **Get a GitHub token**: github.com/settings/tokens -> generate a
    fine-grained token. No special permissions needed.
-4. **Save your tokens**: `cp run.sh.example run.sh`, then paste your two
-   tokens into `run.sh` in a text editor. This file is `.gitignore`'d, so
-   your tokens are never committed. (Alternative: export
-   `CANVAS_API_TOKEN` and `GITHUB_TOKEN` as environment variables
-   yourself instead, e.g. in your shell profile.)
+4. **Save your tokens**: `cp run.sh.example run.sh` (Mac/Linux) or
+   `copy run.py.example run.py` (Windows, or anywhere you'd rather skip
+   bash), then paste your two tokens into that file in a text editor.
+   These files are `.gitignore`'d, so your tokens are never committed.
+   (Alternative: export `CANVAS_API_TOKEN` and `GITHUB_TOKEN` as
+   environment variables yourself instead, e.g. in your shell profile.)
 5. **Copy the config**: `cp config.example.json config.json`, then edit
    `canvas.course_id` to your section's numeric Canvas course ID (visible
    in the course's Canvas URL). Everything else already matches the
@@ -69,13 +70,22 @@ bash run.sh --week 3 --update "Jane Doe"    # refresh just one/a few students
 Results are cached (`config.cache.json`, gitignored) -- a plain re-run
 reuses it and makes no API calls at all.
 
-**On Windows**, `run.sh` needs a bash shell -- use WSL, Git Bash (the
-terminal from Git for Windows), or VSCode's integrated terminal set to
-Git Bash, then run the same `bash run.sh` command above. It won't run
-under PowerShell or cmd.exe directly.
+**On Windows**, or anywhere you'd rather not deal with bash, use `run.py`
+instead -- it's plain Python (standard library only) and does the exact
+same thing `run.sh` does, no shell required:
 
-**On Mac/Linux**, if you get a permissions error running it, make the
-script executable first: `chmod +x run.sh`.
+```
+python run.py --week 3
+```
+
+Use whichever command your system's Python actually answers to --
+`python`, `python3`, or (on Windows, if neither works) `py -3`. All the
+same flags (`--recheck-all`, `--update "Jane Doe"`) work identically.
+`run.sh` still works too if you're on Mac/Linux/WSL/Git Bash and prefer
+it -- both scripts call the same underlying `build_report.py`.
+
+**On Mac/Linux**, if you get a permissions error running `run.sh`, make
+the script executable first: `chmod +x run.sh`.
 
 ## Sharing with a colleague
 
@@ -98,9 +108,9 @@ cd ~/.claude/skills/wdd130-progress
 git pull
 ```
 
-Safe to run anytime -- `config.json`, `run.sh`, and `config.cache.json`
-are all `.gitignore`'d, so pulling never touches your tokens or course
-config, only the skill's own files.
+Safe to run anytime -- `config.json`, `run.sh`, `run.py`, and
+`config.cache.json` are all `.gitignore`'d, so pulling never touches your
+tokens or course config, only the skill's own files.
 
 ## If something breaks on a new section
 

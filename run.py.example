@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+"""
+Copy this file to run.py (in the same folder), fill in your two tokens
+below in a text editor, and from then on just run: python run.py --week N
+(N = which week of the course to check through, 1-5; omit for all 5).
+
+Pure Python, no bash required -- use whichever command your system's
+Python answers to (python, python3, or py -3 on Windows).
+
+Results are cached (config.cache.json, gitignored) -- a plain re-run
+reuses the cache and costs no API calls. Add --recheck-all to force a
+full fresh check of everyone, or --update "name,name" to refresh just
+specific students (e.g. after they resubmit) while reusing the cache for
+everyone else.
+
+run.py is gitignored and Claude will never write your tokens into it --
+fill them in yourself, once. This avoids re-pasting long tokens through
+chat every time the report runs.
+"""
+import os
+import sys
+
+os.environ["CANVAS_API_TOKEN"] = "paste-your-canvas-token-here"
+os.environ["GITHUB_TOKEN"] = "paste-your-github-token-here"
+
+SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(SKILL_DIR, "scripts"))
+
+import build_report  # noqa: E402
+
+sys.argv = [sys.argv[0], os.path.join(SKILL_DIR, "config.json")] + sys.argv[1:]
+build_report.main()
