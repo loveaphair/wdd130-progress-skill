@@ -651,13 +651,13 @@ function dashSortValue(s, col){
   }
 }
 
-// Where a resolved username came from -- manual overrides get no icon
-// (the instructor typed it in themselves, so there's no ambiguity).
-const SRC_EMOJI = { quiz: '🛠️', home_page_graded: '📝', home_page_repo_verified: '📝' };
+// Where a resolved username came from.
+const SRC_EMOJI = { quiz: '🛠️', home_page_graded: '📝', home_page_repo_verified: '📝', manual_override: '⚠️' };
 const SRC_LABEL = {
   quiz: 'Resolved from the quiz answer (GitHub account existence confirmed)',
   home_page_graded: 'Resolved from the graded Home Page submission URL',
   home_page_repo_verified: 'Resolved from the Home Page submission URL (repo confirmed despite a low/no grade)',
+  manual_override: 'Manually overridden in config.json -- not independently verified',
 };
 
 function usernameCell(s){
