@@ -214,17 +214,38 @@ def resolve_assignment_ids(domain, course_id, names):
     return out
 
 
-def get_assignment_scores(domain, course_id, assignment_id):
-    """Returns {user_id: score_or_None} for every submission of this
-    assignment -- used for the code-along self-report gate (a student's
-    technical check only counts once they've self-reported completion)."""
+def get_first_question_scores(domain, course_id, assignment_id):
+    """Returns {user_id: points_or_None} for the FIRST question of the quiz
+    behind this assignment -- used for the code-along self-report gate, where
+    question 1 (worth 5 points) is the student's self-report and the rest of
+    the quiz is unrelated. Reading the whole-quiz grade would let points from
+    other questions masquerade as a self-report."""
+    assignment, _ = _request(domain, f"/api/v1/courses/{course_id}/assignments/{assignment_id}")
+    quiz_id = assignment.get("quiz_id")
+    if not quiz_id:
+        raise CanvasError(f"Assignment {assignment_id} isn't a classic quiz -- can't read per-question points.")
+    questions, _ = _request(
+        domain, f"/api/v1/courses/{course_id}/quizzes/{quiz_id}/questions", {"per_page": 100}
+    )
+    if not questions:
+        raise CanvasError(f"Quiz {quiz_id} has no questions.")
+    first_id = min(questions, key=lambda q: q.get("position") or 0)["id"]
+
     items = _paginated(
-        domain, f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions"
+        domain,
+        f"/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions",
+        {"include[]": "submission_history"},
     )
     out = {}
     for s in items:
-        uid = str(s.get("user_id"))
-        out[uid] = s.get("score")
+        history = s.get("submission_history") or []
+        points = None
+        if history:
+            for item in history[-1].get("submission_data") or []:
+                if item.get("question_id") == first_id:
+                    points = item.get("points")
+                    break
+        out[str(s.get("user_id"))] = points
     return out
 
 

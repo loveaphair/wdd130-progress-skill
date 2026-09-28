@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-28
+
+### Changed
+- The code-along self-report gate now looks only at question 1 of each
+  week's self-report quiz (the 5-point "did you do it" question) instead
+  of the whole-quiz grade. Any score above 0 counts as self-reported.
+  `canvas.codealong_selfreport_min_score` is gone from the config; the
+  report text was updated to match.
+
 ## 2026-09-21
 
 ### Changed

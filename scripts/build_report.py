@@ -352,14 +352,13 @@ def main():
         selfreport_ids = canvas_api.resolve_assignment_ids(domain, course_id, list(selfreport_names.values()))
         selfreport_ids = {wk: selfreport_ids[name] for wk, name in selfreport_names.items()}
         selfreport_scores = {
-            wk: canvas_api.get_assignment_scores(domain, course_id, aid)
+            wk: canvas_api.get_first_question_scores(domain, course_id, aid)
             for wk, aid in selfreport_ids.items()
         }
-        selfreport_min_score = canvas.get("codealong_selfreport_min_score", 5)
 
         def self_reported(sid, wk):
             score = selfreport_scores.get(wk, {}).get(sid)
-            return score is not None and score >= selfreport_min_score
+            return score is not None and score > 0
 
         def selfreport_link(sid, wk):
             aid = selfreport_ids.get(wk)
@@ -910,7 +909,6 @@ def write_report(cfg, dataset, quiz_id, home_assignment_id, current_week):
         "__QUIZ_QUESTION_HINT__": canvas["quiz_question_hint"],
         "__HOME_PAGE_ASSIGNMENT_NAME__": canvas["home_page_assignment_name"],
         "__HOME_PAGE_ASSIGNMENT_ID__": str(home_assignment_id),
-        "__SELFREPORT_MIN_SCORE__": str(canvas.get("codealong_selfreport_min_score", 5)),
         "__COURSE_ID__": str(canvas["course_id"]),
         "__CURRENT_WEEK__": str(current_week),
     }

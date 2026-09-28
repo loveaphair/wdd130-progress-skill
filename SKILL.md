@@ -188,9 +188,10 @@ understand the whole pipeline.
   graded deliverable) -- they're tracked and displayed separately since a
   student can be caught up on one and behind on the other.
   **Code-along checks are self-report-gated**: a student's technical
-  result (pass/fail/etc.) only counts once they've scored at least
-  `canvas.codealong_selfreport_min_score` on that week's
-  `canvas.codealong_selfreport_assignments[weekNN]` Canvas assignment.
+  result (pass/fail/etc.) only counts once they've earned more than 0
+  points on question 1 (the 5-point self-report) of that week's
+  `canvas.codealong_selfreport_assignments[weekNN]` Canvas quiz. The rest
+  of the quiz's grade is ignored.
   Below that, the status is `not_self_reported` regardless of what their
   code actually shows -- per the instructor, a student who never claimed
   credit for the work isn't worth flagging against the technical bar. Main
