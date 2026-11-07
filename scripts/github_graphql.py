@@ -16,6 +16,7 @@ whatever the repo's actual default branch is.
 import json
 import os
 import re
+import time
 import urllib.request
 import urllib.error
 
@@ -64,22 +65,38 @@ def _token():
     return token
 
 
-def _post(query):
-    req = urllib.request.Request(
-        GRAPHQL_URL,
-        data=json.dumps({"query": query}).encode("utf-8"),
-        headers={
-            "Authorization": f"bearer {_token()}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", errors="replace")
-        raise GitHubError(f"GitHub GraphQL error {e.code}: {detail}") from e
+def _post(query, tries=4):
+    # GitHub answers a heavy GraphQL query with 502/503 when it times out or
+    # rate-limits internally; it usually succeeds on a retry.
+    # ponytail: fixed backoff, no jitter -- one process, a handful of requests.
+    for attempt in range(tries):
+        req = urllib.request.Request(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query}).encode("utf-8"),
+            headers={
+                "Authorization": f"bearer {_token()}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")
+            if e.code in (502, 503, 504, 429) and attempt < tries - 1:
+                wait = 2 ** attempt * 3
+                print(f"  GitHub returned {e.code}, retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            raise GitHubError(f"GitHub GraphQL error {e.code}: {detail}") from e
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < tries - 1:
+                wait = 2 ** attempt * 3
+                print(f"  GitHub request failed ({e}), retrying in {wait}s...")
+                time.sleep(wait)
+                continue
+            raise GitHubError(f"GitHub GraphQL request failed: {e}") from e
 
 
 def _build_query(batch, repo_name, file_paths, folder_paths):
