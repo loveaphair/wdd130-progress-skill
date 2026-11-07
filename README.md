@@ -65,6 +65,7 @@ Other flags work the same as they do under Claude:
 ```
 bash run.sh --week 3 --recheck-all          # ignore the cache, recheck everyone
 bash run.sh --week 3 --update "Jane Doe"    # refresh just one/a few students
+bash run.sh --rebuild-week 3                # force a fresh check of everyone, capped at week 3
 ```
 
 Results are cached (`config.cache.json`, gitignored) -- a plain re-run
@@ -80,7 +81,7 @@ python run.py --week 3
 
 Use whichever command your system's Python actually answers to --
 `python`, `python3`, or (on Windows, if neither works) `py -3`. All the
-same flags (`--recheck-all`, `--update "Jane Doe"`) work identically.
+same flags (`--recheck-all`, `--update "Jane Doe"`, `--rebuild-week N`) work identically.
 `run.sh` still works too if you're on Mac/Linux/WSL/Git Bash and prefer
 it -- both scripts call the same underlying `build_report.py`.
 
