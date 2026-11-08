@@ -531,7 +531,7 @@ def main():
         # Only fetch what `effective_week` actually calls for -- early in the
         # term there's no point checking (or showing) weeks the class hasn't
         # reached.
-        file_paths = [checks["ai_scan_root_file"]]
+        file_paths = [checks["ai_scan_root_file"], "README.md"]
         file_paths += checks["week01"]["candidate_files"]
         if effective_week >= 2:
             file_paths.append(checks["week02"]["file"])
@@ -601,6 +601,12 @@ def main():
             repo_used = (r or {}).get("repo_name_used", gh["repo_name"])
             branch = (r or {}).get("branch", "main")
             root = r["url"] if r else None
+
+            readme_html = (r or {}).get("files", {}).get("README.md")
+            has_template_marker = (
+                bool(readme_html and "This template is for educational use in WDD 130." in readme_html)
+                if username else None
+            )
 
             week_links = {}
             for wk in folder_paths:
@@ -800,6 +806,7 @@ def main():
             fresh_entries[sid] = {
                 "sid": sid, "name": s["name"], "username": username, "usernameSource": s["source"],
                 "repo": repo_used, "root": root, "weeks": week_links,
+                "template": has_template_marker,
                 "week01": {
                     "codealong": {"status": w01_status, "file": w01_file, "fileLink": w01_link,
                                   "selfReportLink": w01_sr_link, "reasons": w01_reasons},

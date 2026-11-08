@@ -173,6 +173,13 @@
   }
   .sig-chips .none{ font-size:12.5px; color:var(--ink-muted); font-style:italic; }
 
+  /* Template-marker badge */
+  .tmpl-badge{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; white-space:nowrap;
+    padding:3px 9px; border-radius:99px; background:var(--bad-soft); color:var(--bad);
+  }
+  .tmpl-badge.good{ background:var(--good-soft); color:var(--good); }
+
   /* Guardrail badge */
   .gr-badge{
     font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; white-space:nowrap;
@@ -311,6 +318,7 @@
             <th data-sort="root">GitHub Repo</th>
             <th data-sort="home">Home Page</th>
             <th data-sort="about">About Page</th>
+            <th data-sort="template">TEMPLATE</th>
             <th data-sort="guardrail">Guardrail</th>
           </tr></thead>
           <tbody id="dash-body"></tbody>
@@ -613,6 +621,12 @@ function aiBadge(ai){
     panel: `<div class="ai-inline-panel" hidden>${chips}</div>`
   };
 }
+function templateBadge(present){
+  if(present === null || present === undefined) return `<span class="dash-empty">&mdash;</span>`;
+  return present
+    ? `<span class="tmpl-badge good">Y</span>`
+    : `<span class="tmpl-badge">N</span>`;
+}
 function guardrailBadge(gr){
   if(!gr || gr.status === 'not_checked') return {summary: `<span class="gr-badge muted">&mdash;</span>`, panel: '', label: ''};
   const map = {
@@ -671,6 +685,7 @@ function dashSortValue(s, col){
     case 'username': return s.username || '';
     case 'root': return s.root || '';
     case 'home': case 'about': return s.username || '';
+    case 'template': return s.template === null || s.template === undefined ? '' : (s.template ? 'Y' : 'N');
     default: return '';
   }
 }
@@ -713,6 +728,7 @@ function renderDashboard(){
       <td>${linkOrDash(s.root, 'GitHub Repo')}</td>
       <td>${linkOrDash(pagesLink(s, ''), 'Home Page')}</td>
       <td>${linkOrDash(pagesLink(s, '/wwr/about.html'), 'About Page')}</td>
+      <td>${templateBadge(s.template)}</td>
       <td>${gr.summary}${gr.panel}</td>
     </tr>`).join('');
 }
