@@ -188,10 +188,12 @@ def css_has_property_anywhere(css_text, prop, value):
 def parse_args(argv):
     """Returns (config_path, current_week, recheck_all, update_query).
     --week N caps which weeks get fetched/checked; --recheck-all forces a
-    full fresh check of everyone, ignoring the cache; --update "name,name"
-    refreshes just the named student(s) from a comma-separated free-text
-    list (GitHub usernames or name substrings), reusing the cache for
-    everyone else. config_path is whatever positional arg is left."""
+    full fresh check of everyone, ignoring the cache; --rebuild-week N is
+    shorthand for --week N --recheck-all (force a fresh check of everyone,
+    capped at week N); --update "name,name" refreshes just the named
+    student(s) from a comma-separated free-text list (GitHub usernames or
+    name substrings), reusing the cache for everyone else. config_path is
+    whatever positional arg is left."""
     config_path = None
     current_week = 6
     recheck_all = False
@@ -204,6 +206,10 @@ def parse_args(argv):
         elif argv[i] == "--recheck-all":
             recheck_all = True
             i += 1
+        elif argv[i] == "--rebuild-week" and i + 1 < len(argv):
+            current_week = int(argv[i + 1])
+            recheck_all = True
+            i += 2
         elif argv[i] == "--update" and i + 1 < len(argv):
             update_query = argv[i + 1]
             i += 2
@@ -525,7 +531,7 @@ def main():
         # Only fetch what `effective_week` actually calls for -- early in the
         # term there's no point checking (or showing) weeks the class hasn't
         # reached.
-        file_paths = [checks["ai_scan_root_file"]]
+        file_paths = [checks["ai_scan_root_file"], "README.md"]
         file_paths += checks["week01"]["candidate_files"]
         if effective_week >= 2:
             file_paths.append(checks["week02"]["file"])
@@ -595,6 +601,12 @@ def main():
             repo_used = (r or {}).get("repo_name_used", gh["repo_name"])
             branch = (r or {}).get("branch", "main")
             root = r["url"] if r else None
+
+            readme_html = (r or {}).get("files", {}).get("README.md")
+            has_template_marker = (
+                bool(readme_html and "This template is for educational use in WDD 130." in readme_html)
+                if username else None
+            )
 
             week_links = {}
             for wk in folder_paths:
@@ -794,6 +806,7 @@ def main():
             fresh_entries[sid] = {
                 "sid": sid, "name": s["name"], "username": username, "usernameSource": s["source"],
                 "repo": repo_used, "root": root, "weeks": week_links,
+                "template": has_template_marker,
                 "week01": {
                     "codealong": {"status": w01_status, "file": w01_file, "fileLink": w01_link,
                                   "selfReportLink": w01_sr_link, "reasons": w01_reasons},
