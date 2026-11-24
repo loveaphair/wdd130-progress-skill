@@ -188,10 +188,12 @@ def css_has_property_anywhere(css_text, prop, value):
 def parse_args(argv):
     """Returns (config_path, current_week, recheck_all, update_query).
     --week N caps which weeks get fetched/checked; --recheck-all forces a
-    full fresh check of everyone, ignoring the cache; --update "name,name"
-    refreshes just the named student(s) from a comma-separated free-text
-    list (GitHub usernames or name substrings), reusing the cache for
-    everyone else. config_path is whatever positional arg is left."""
+    full fresh check of everyone, ignoring the cache; --rebuild-week N is
+    shorthand for --week N --recheck-all (force a fresh check of everyone,
+    capped at week N); --update "name,name" refreshes just the named
+    student(s) from a comma-separated free-text list (GitHub usernames or
+    name substrings), reusing the cache for everyone else. config_path is
+    whatever positional arg is left."""
     config_path = None
     current_week = 6
     recheck_all = False
@@ -204,6 +206,10 @@ def parse_args(argv):
         elif argv[i] == "--recheck-all":
             recheck_all = True
             i += 1
+        elif argv[i] == "--rebuild-week" and i + 1 < len(argv):
+            current_week = int(argv[i + 1])
+            recheck_all = True
+            i += 2
         elif argv[i] == "--update" and i + 1 < len(argv):
             update_query = argv[i + 1]
             i += 2

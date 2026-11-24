@@ -119,6 +119,15 @@ pass `--recheck-all`. Use this when the instructor explicitly asks to
 re-verify everyone (e.g. "just double check the whole class"), not as a
 routine default -- that defeats the point of caching.
 
+To force a fresh check of everyone capped at a specific week (e.g. a
+checker bug affected week03 and the instructor wants that week redone),
+pass `--rebuild-week N` -- shorthand for `--week N --recheck-all`. Note
+the cache has no per-week granularity: this re-fetches *all* weeks 1..N
+for every active student (there's no way to touch only week N's data in
+isolation), and afterward the cache's "current week" becomes N -- a later
+plain re-run won't show weeks beyond N again until `--week` is bumped
+past N.
+
 This prints progress as it works through: roster fetch, quiz/assignment
 resolution, the batched GitHub GraphQL passes, then writes
 `wdd130_progress_report.html` to the current directory.
